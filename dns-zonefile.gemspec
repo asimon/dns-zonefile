@@ -26,6 +26,6 @@ some canonical form.}
 
   s.add_development_dependency "rspec", "= 2.6"
   s.add_development_dependency "rake"
-  s.add_runtime_dependency "treetop"
+  s.add_runtime_dependency "treetop", "~> 1.4.8"
   s.add_runtime_dependency "polyglot"
 end

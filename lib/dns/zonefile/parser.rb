@@ -55,7 +55,7 @@ module DNS
         if node_cache[:zone].has_key?(index)
           cached = node_cache[:zone][index]
           if cached
-            node_cache[:zone][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -67,17 +67,14 @@ module DNS
           i2 = index
           r3 = _nt_variable
           if r3
-            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
             r2 = r3
           else
             r4 = _nt_space_or_break
             if r4
-              r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
               r2 = r4
             else
               r5 = _nt_comment
               if r5
-                r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
                 r2 = r5
               else
                 @index = i2
@@ -102,27 +99,22 @@ module DNS
               i8 = index
               r9 = _nt_resource_record
               if r9
-                r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
                 r8 = r9
               else
                 r10 = _nt_variable
                 if r10
-                  r10 = SyntaxNode.new(input, (index-1)...index) if r10 == true
                   r8 = r10
                 else
                   r11 = _nt_comment
                   if r11
-                    r11 = SyntaxNode.new(input, (index-1)...index) if r11 == true
                     r8 = r11
                   else
                     r12 = _nt_space
                     if r12
-                      r12 = SyntaxNode.new(input, (index-1)...index) if r12 == true
                       r8 = r12
                     else
                       r13 = _nt_linebreak
                       if r13
-                        r13 = SyntaxNode.new(input, (index-1)...index) if r13 == true
                         r8 = r13
                       else
                         @index = i8
@@ -184,16 +176,16 @@ module DNS
         if node_cache[:variable].has_key?(index)
           cached = node_cache[:variable][index]
           if cached
-            node_cache[:variable][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0, s0 = index, []
-        if (match_len = has_terminal?("$", false, index))
-          r1 = true
-          @index += match_len
+        if has_terminal?("$", false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           terminal_parse_failure("$")
           r1 = nil
@@ -202,11 +194,10 @@ module DNS
         if r1
           s2, i2 = [], index
           loop do
-            if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9]'] ||= Regexp.new(gr), :regexp, index)
+            if has_terminal?('\G[a-zA-Z0-9]', true, index)
               r3 = true
               @index += 1
             else
-              terminal_parse_failure('[a-zA-Z0-9]')
               r3 = nil
             end
             if r3
@@ -228,11 +219,10 @@ module DNS
             if r4
               s5, i5 = [], index
               loop do
-                if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9\\.\\-_]'] ||= Regexp.new(gr), :regexp, index)
+                if has_terminal?('\G[a-zA-Z0-9\\.\\-_]', true, index)
                   r6 = true
                   @index += 1
                 else
-                  terminal_parse_failure('[a-zA-Z0-9\\.\\-_]')
                   r6 = nil
                 end
                 if r6
@@ -371,7 +361,7 @@ module DNS
         if node_cache[:soa].has_key?(index)
           cached = node_cache[:soa][index]
           if cached
-            node_cache[:soa][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -390,9 +380,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("SOA", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("SOA", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("SOA")
                   r5 = nil
@@ -414,9 +404,9 @@ module DNS
                           r10 = _nt_space
                           s0 << r10
                           if r10
-                            if (match_len = has_terminal?("(", false, index))
-                              r12 = true
-                              @index += match_len
+                            if has_terminal?("(", false, index)
+                              r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                              @index += 1
                             else
                               terminal_parse_failure("(")
                               r12 = nil
@@ -479,9 +469,9 @@ module DNS
                                                   r24 = instantiate_node(SyntaxNode,input, i24...index, s24)
                                                   s0 << r24
                                                   if r24
-                                                    if (match_len = has_terminal?(")", false, index))
-                                                      r27 = true
-                                                      @index += match_len
+                                                    if has_terminal?(")", false, index)
+                                                      r27 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                                                      @index += 1
                                                     else
                                                       terminal_parse_failure(")")
                                                       r27 = nil
@@ -577,7 +567,7 @@ module DNS
         if node_cache[:resource_record].has_key?(index)
           cached = node_cache[:resource_record][index]
           if cached
-            node_cache[:resource_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -587,67 +577,54 @@ module DNS
         i1 = index
         r2 = _nt_a_record
         if r2
-          r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
           r1 = r2
         else
           r3 = _nt_aaaa_record
           if r3
-            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
             r1 = r3
           else
             r4 = _nt_cname_record
             if r4
-              r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
               r1 = r4
             else
               r5 = _nt_mx_record
               if r5
-                r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
                 r1 = r5
               else
                 r6 = _nt_naptr_record
                 if r6
-                  r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
                   r1 = r6
                 else
                   r7 = _nt_ns_record
                   if r7
-                    r7 = SyntaxNode.new(input, (index-1)...index) if r7 == true
                     r1 = r7
                   else
                     r8 = _nt_ptr_record
                     if r8
-                      r8 = SyntaxNode.new(input, (index-1)...index) if r8 == true
                       r1 = r8
                     else
                       r9 = _nt_srv_record
                       if r9
-                        r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
                         r1 = r9
                       else
                         r10 = _nt_spf_record
                         if r10
-                          r10 = SyntaxNode.new(input, (index-1)...index) if r10 == true
                           r1 = r10
                         else
                           r11 = _nt_txt_record
                           if r11
-                            r11 = SyntaxNode.new(input, (index-1)...index) if r11 == true
                             r1 = r11
                           else
                             r12 = _nt_soa_record
                             if r12
-                              r12 = SyntaxNode.new(input, (index-1)...index) if r12 == true
                               r1 = r12
                             else
                               r13 = _nt_x_mail_fwd_record
                               if r13
-                                r13 = SyntaxNode.new(input, (index-1)...index) if r13 == true
                                 r1 = r13
                               else
                                 r14 = _nt_x_web_fwd_record
                                 if r14
-                                  r14 = SyntaxNode.new(input, (index-1)...index) if r14 == true
                                   r1 = r14
                                 else
                                   @index = i1
@@ -743,7 +720,7 @@ module DNS
         if node_cache[:a_record].has_key?(index)
           cached = node_cache[:a_record][index]
           if cached
-            node_cache[:a_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -762,9 +739,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("A", false, index))
-                  r5 = true
-                  @index += match_len
+                if has_terminal?("A", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure("A")
                   r5 = nil
@@ -810,7 +787,7 @@ module DNS
         if node_cache[:ip_address].has_key?(index)
           cached = node_cache[:ip_address][index]
           if cached
-            node_cache[:ip_address][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -819,11 +796,10 @@ module DNS
         i0, s0 = index, []
         s1, i1 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[\\d]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[\\d]', true, index)
             r2 = true
             @index += 1
           else
-            terminal_parse_failure('[\\d]')
             r2 = nil
           end
           if r2
@@ -840,9 +816,9 @@ module DNS
         end
         s0 << r1
         if r1
-          if (match_len = has_terminal?(".", false, index))
-            r3 = true
-            @index += match_len
+          if has_terminal?(".", false, index)
+            r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure(".")
             r3 = nil
@@ -851,11 +827,10 @@ module DNS
           if r3
             s4, i4 = [], index
             loop do
-              if has_terminal?(@regexps[gr = '\A[\\d]'] ||= Regexp.new(gr), :regexp, index)
+              if has_terminal?('\G[\\d]', true, index)
                 r5 = true
                 @index += 1
               else
-                terminal_parse_failure('[\\d]')
                 r5 = nil
               end
               if r5
@@ -872,9 +847,9 @@ module DNS
             end
             s0 << r4
             if r4
-              if (match_len = has_terminal?(".", false, index))
-                r6 = true
-                @index += match_len
+              if has_terminal?(".", false, index)
+                r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
               else
                 terminal_parse_failure(".")
                 r6 = nil
@@ -883,11 +858,10 @@ module DNS
               if r6
                 s7, i7 = [], index
                 loop do
-                  if has_terminal?(@regexps[gr = '\A[\\d]'] ||= Regexp.new(gr), :regexp, index)
+                  if has_terminal?('\G[\\d]', true, index)
                     r8 = true
                     @index += 1
                   else
-                    terminal_parse_failure('[\\d]')
                     r8 = nil
                   end
                   if r8
@@ -904,9 +878,9 @@ module DNS
                 end
                 s0 << r7
                 if r7
-                  if (match_len = has_terminal?(".", false, index))
-                    r9 = true
-                    @index += match_len
+                  if has_terminal?(".", false, index)
+                    r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure(".")
                     r9 = nil
@@ -915,11 +889,10 @@ module DNS
                   if r9
                     s10, i10 = [], index
                     loop do
-                      if has_terminal?(@regexps[gr = '\A[\\d]'] ||= Regexp.new(gr), :regexp, index)
+                      if has_terminal?('\G[\\d]', true, index)
                         r11 = true
                         @index += 1
                       else
-                        terminal_parse_failure('[\\d]')
                         r11 = nil
                       end
                       if r11
@@ -992,7 +965,7 @@ module DNS
         if node_cache[:aaaa_record].has_key?(index)
           cached = node_cache[:aaaa_record][index]
           if cached
-            node_cache[:aaaa_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1011,9 +984,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("AAAA", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("AAAA", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 4))
+                  @index += 4
                 else
                   terminal_parse_failure("AAAA")
                   r5 = nil
@@ -1056,7 +1029,7 @@ module DNS
         if node_cache[:ip6_address].has_key?(index)
           cached = node_cache[:ip6_address][index]
           if cached
-            node_cache[:ip6_address][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1064,11 +1037,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[\\da-fA-F:.]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[\\da-fA-F:.]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[\\da-fA-F:.]')
             r1 = nil
           end
           if r1
@@ -1200,7 +1172,7 @@ module DNS
         if node_cache[:cname_record].has_key?(index)
           cached = node_cache[:cname_record][index]
           if cached
-            node_cache[:cname_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1220,9 +1192,9 @@ module DNS
               r5 = _nt_klass
               s1 << r5
               if r5
-                if (match_len = has_terminal?("CNAME", false, index))
-                  r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("CNAME", false, index)
+                  r6 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                  @index += 5
                 else
                   terminal_parse_failure("CNAME")
                   r6 = nil
@@ -1248,7 +1220,6 @@ module DNS
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(CnameRecord4)
         else
@@ -1265,9 +1236,9 @@ module DNS
                 r13 = _nt_ttl
                 s9 << r13
                 if r13
-                  if (match_len = has_terminal?("CNAME", false, index))
-                    r14 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                    @index += match_len
+                  if has_terminal?("CNAME", false, index)
+                    r14 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                    @index += 5
                   else
                     terminal_parse_failure("CNAME")
                     r14 = nil
@@ -1293,7 +1264,6 @@ module DNS
             r9 = nil
           end
           if r9
-            r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
             r0 = r9
             r0.extend(CnameRecord4)
           else
@@ -1307,9 +1277,9 @@ module DNS
                 r20 = _nt_ttl
                 s17 << r20
                 if r20
-                  if (match_len = has_terminal?("CNAME", false, index))
-                    r21 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                    @index += match_len
+                  if has_terminal?("CNAME", false, index)
+                    r21 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                    @index += 5
                   else
                     terminal_parse_failure("CNAME")
                     r21 = nil
@@ -1334,7 +1304,6 @@ module DNS
               r17 = nil
             end
             if r17
-              r17 = SyntaxNode.new(input, (index-1)...index) if r17 == true
               r0 = r17
               r0.extend(CnameRecord4)
             else
@@ -1348,9 +1317,9 @@ module DNS
                   r27 = _nt_klass
                   s24 << r27
                   if r27
-                    if (match_len = has_terminal?("CNAME", false, index))
-                      r28 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                      @index += match_len
+                    if has_terminal?("CNAME", false, index)
+                      r28 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                      @index += 5
                     else
                       terminal_parse_failure("CNAME")
                       r28 = nil
@@ -1375,7 +1344,6 @@ module DNS
                 r24 = nil
               end
               if r24
-                r24 = SyntaxNode.new(input, (index-1)...index) if r24 == true
                 r0 = r24
                 r0.extend(CnameRecord4)
               else
@@ -1436,7 +1404,7 @@ module DNS
         if node_cache[:mx_record].has_key?(index)
           cached = node_cache[:mx_record][index]
           if cached
-            node_cache[:mx_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1455,9 +1423,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("MX", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("MX", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                  @index += 2
                 else
                   terminal_parse_failure("MX")
                   r5 = nil
@@ -1534,7 +1502,7 @@ module DNS
         if node_cache[:naptr_record].has_key?(index)
           cached = node_cache[:naptr_record][index]
           if cached
-            node_cache[:naptr_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1553,9 +1521,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("NAPTR", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("NAPTR", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                  @index += 5
                 else
                   terminal_parse_failure("NAPTR")
                   r5 = nil
@@ -1624,7 +1592,7 @@ module DNS
         if node_cache[:ns_record].has_key?(index)
           cached = node_cache[:ns_record][index]
           if cached
-            node_cache[:ns_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1643,9 +1611,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("NS", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("NS", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                  @index += 2
                 else
                   terminal_parse_failure("NS")
                   r5 = nil
@@ -1714,7 +1682,7 @@ module DNS
         if node_cache[:ptr_record].has_key?(index)
           cached = node_cache[:ptr_record][index]
           if cached
-            node_cache[:ptr_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1733,9 +1701,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("PTR", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("PTR", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("PTR")
                   r5 = nil
@@ -1820,7 +1788,7 @@ module DNS
         if node_cache[:soa_record].has_key?(index)
           cached = node_cache[:soa_record][index]
           if cached
-            node_cache[:soa_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -1839,9 +1807,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("SOA", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("SOA", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("SOA")
                   r5 = nil
@@ -2092,7 +2060,7 @@ module DNS
         if node_cache[:srv_record].has_key?(index)
           cached = node_cache[:srv_record][index]
           if cached
-            node_cache[:srv_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2112,9 +2080,9 @@ module DNS
               r5 = _nt_klass
               s1 << r5
               if r5
-                if (match_len = has_terminal?("SRV", false, index))
-                  r6 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("SRV", false, index)
+                  r6 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("SRV")
                   r6 = nil
@@ -2164,7 +2132,6 @@ module DNS
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(SrvRecord4)
         else
@@ -2181,9 +2148,9 @@ module DNS
                 r19 = _nt_ttl
                 s15 << r19
                 if r19
-                  if (match_len = has_terminal?("SRV", false, index))
-                    r20 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                    @index += match_len
+                  if has_terminal?("SRV", false, index)
+                    r20 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                    @index += 3
                   else
                     terminal_parse_failure("SRV")
                     r20 = nil
@@ -2233,7 +2200,6 @@ module DNS
             r15 = nil
           end
           if r15
-            r15 = SyntaxNode.new(input, (index-1)...index) if r15 == true
             r0 = r15
             r0.extend(SrvRecord4)
           else
@@ -2247,9 +2213,9 @@ module DNS
                 r32 = _nt_ttl
                 s29 << r32
                 if r32
-                  if (match_len = has_terminal?("SRV", false, index))
-                    r33 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                    @index += match_len
+                  if has_terminal?("SRV", false, index)
+                    r33 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                    @index += 3
                   else
                     terminal_parse_failure("SRV")
                     r33 = nil
@@ -2298,7 +2264,6 @@ module DNS
               r29 = nil
             end
             if r29
-              r29 = SyntaxNode.new(input, (index-1)...index) if r29 == true
               r0 = r29
               r0.extend(SrvRecord4)
             else
@@ -2312,9 +2277,9 @@ module DNS
                   r45 = _nt_klass
                   s42 << r45
                   if r45
-                    if (match_len = has_terminal?("SRV", false, index))
-                      r46 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                      @index += match_len
+                    if has_terminal?("SRV", false, index)
+                      r46 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                      @index += 3
                     else
                       terminal_parse_failure("SRV")
                       r46 = nil
@@ -2363,7 +2328,6 @@ module DNS
                 r42 = nil
               end
               if r42
-                r42 = SyntaxNode.new(input, (index-1)...index) if r42 == true
                 r0 = r42
                 r0.extend(SrvRecord4)
               else
@@ -2416,7 +2380,7 @@ module DNS
         if node_cache[:spf_record].has_key?(index)
           cached = node_cache[:spf_record][index]
           if cached
-            node_cache[:spf_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2435,9 +2399,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("SPF", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("SPF", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("SPF")
                   r5 = nil
@@ -2506,7 +2470,7 @@ module DNS
         if node_cache[:txt_record].has_key?(index)
           cached = node_cache[:txt_record][index]
           if cached
-            node_cache[:txt_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2525,9 +2489,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("TXT", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("TXT", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                  @index += 3
                 else
                   terminal_parse_failure("TXT")
                   r5 = nil
@@ -2596,7 +2560,7 @@ module DNS
         if node_cache[:x_mail_fwd_record].has_key?(index)
           cached = node_cache[:x_mail_fwd_record][index]
           if cached
-            node_cache[:x_mail_fwd_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2615,9 +2579,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("X-MAIL-FWD", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("X-MAIL-FWD", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 10))
+                  @index += 10
                 else
                   terminal_parse_failure("X-MAIL-FWD")
                   r5 = nil
@@ -2694,7 +2658,7 @@ module DNS
         if node_cache[:x_web_fwd_record].has_key?(index)
           cached = node_cache[:x_web_fwd_record][index]
           if cached
-            node_cache[:x_web_fwd_record][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2713,9 +2677,9 @@ module DNS
               r4 = _nt_klass
               s0 << r4
               if r4
-                if (match_len = has_terminal?("X-WEB-FWD", false, index))
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                  @index += match_len
+                if has_terminal?("X-WEB-FWD", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 9))
+                  @index += 9
                 else
                   terminal_parse_failure("X-WEB-FWD")
                   r5 = nil
@@ -2773,7 +2737,7 @@ module DNS
         if node_cache[:origin].has_key?(index)
           cached = node_cache[:origin][index]
           if cached
-            node_cache[:origin][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2820,7 +2784,7 @@ module DNS
         if node_cache[:space].has_key?(index)
           cached = node_cache[:space][index]
           if cached
-            node_cache[:space][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2828,11 +2792,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[ \\t]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[ \\t]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[ \\t]')
             r1 = nil
           end
           if r1
@@ -2865,7 +2828,7 @@ module DNS
         if node_cache[:linebreak].has_key?(index)
           cached = node_cache[:linebreak][index]
           if cached
-            node_cache[:linebreak][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2873,11 +2836,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[\\n\\r]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[\\n\\r]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[\\n\\r]')
             r1 = nil
           end
           if r1
@@ -2910,7 +2872,7 @@ module DNS
         if node_cache[:space_or_break].has_key?(index)
           cached = node_cache[:space_or_break][index]
           if cached
-            node_cache[:space_or_break][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2918,11 +2880,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[\\s]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[\\s]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[\\s]')
             r1 = nil
           end
           if r1
@@ -2961,7 +2922,7 @@ module DNS
         if node_cache[:klass].has_key?(index)
           cached = node_cache[:klass][index]
           if cached
-            node_cache[:klass][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -2969,9 +2930,9 @@ module DNS
 
         i0 = index
         i1, s1 = index, []
-        if (match_len = has_terminal?("IN", false, index))
-          r2 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-          @index += match_len
+        if has_terminal?("IN", false, index)
+          r2 = instantiate_node(SyntaxNode,input, index...(index + 2))
+          @index += 2
         else
           terminal_parse_failure("IN")
           r2 = nil
@@ -2989,19 +2950,17 @@ module DNS
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(Klass1)
         else
-          if (match_len = has_terminal?('', false, index))
-            r4 = true
-            @index += match_len
+          if has_terminal?('', false, index)
+            r4 = instantiate_node(SyntaxNode,input, index...(index + 0))
+            @index += 0
           else
             terminal_parse_failure('')
             r4 = nil
           end
           if r4
-            r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
             r0 = r4
             r0.extend(Klass1)
           else
@@ -3029,7 +2988,7 @@ module DNS
         if node_cache[:comment].has_key?(index)
           cached = node_cache[:comment][index]
           if cached
-            node_cache[:comment][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3048,9 +3007,9 @@ module DNS
         r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
         s0 << r1
         if r1
-          if (match_len = has_terminal?(";", false, index))
-            r3 = true
-            @index += match_len
+          if has_terminal?(";", false, index)
+            r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure(";")
             r3 = nil
@@ -3059,11 +3018,10 @@ module DNS
           if r3
             s4, i4 = [], index
             loop do
-              if has_terminal?(@regexps[gr = '\A[^\\n\\r]'] ||= Regexp.new(gr), :regexp, index)
+              if has_terminal?('\G[^\\n\\r]', true, index)
                 r5 = true
                 @index += 1
               else
-                terminal_parse_failure('[^\\n\\r]')
                 r5 = nil
               end
               if r5
@@ -3108,7 +3066,7 @@ module DNS
         if node_cache[:ns].has_key?(index)
           cached = node_cache[:ns][index]
           if cached
-            node_cache[:ns][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3158,7 +3116,7 @@ module DNS
         if node_cache[:rp].has_key?(index)
           cached = node_cache[:rp][index]
           if cached
-            node_cache[:rp][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3170,26 +3128,23 @@ module DNS
           s2, i2 = [], index
           loop do
             i3 = index
-            if (match_len = has_terminal?("\\.", false, index))
-              r4 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
+            if has_terminal?("\\.", false, index)
+              r4 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              @index += 2
             else
               terminal_parse_failure("\\.")
               r4 = nil
             end
             if r4
-              r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
               r3 = r4
             else
-              if has_terminal?(@regexps[gr = '\A[+a-zA-Z0-9\\-)]'] ||= Regexp.new(gr), :regexp, index)
+              if has_terminal?('\G[+a-zA-Z0-9\\-)]', true, index)
                 r5 = true
                 @index += 1
               else
-                terminal_parse_failure('[+a-zA-Z0-9\\-)]')
                 r5 = nil
               end
               if r5
-                r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
                 r3 = r5
               else
                 @index = i3
@@ -3210,9 +3165,9 @@ module DNS
           end
           s1 << r2
           if r2
-            if (match_len = has_terminal?(".", false, index))
-              r6 = true
-              @index += match_len
+            if has_terminal?(".", false, index)
+              r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure(".")
               r6 = nil
@@ -3266,7 +3221,7 @@ module DNS
         if node_cache[:serial].has_key?(index)
           cached = node_cache[:serial][index]
           if cached
-            node_cache[:serial][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3327,7 +3282,7 @@ module DNS
         if node_cache[:time_interval].has_key?(index)
           cached = node_cache[:time_interval][index]
           if cached
-            node_cache[:time_interval][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3375,7 +3330,7 @@ module DNS
         if node_cache[:refresh].has_key?(index)
           cached = node_cache[:refresh][index]
           if cached
-            node_cache[:refresh][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3425,7 +3380,7 @@ module DNS
         if node_cache[:integer].has_key?(index)
           cached = node_cache[:integer][index]
           if cached
-            node_cache[:integer][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3433,11 +3388,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[0-9]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[0-9]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[0-9]')
             r1 = nil
           end
           if r1
@@ -3480,142 +3434,131 @@ module DNS
         if node_cache[:time_multiplier].has_key?(index)
           cached = node_cache[:time_multiplier][index]
           if cached
-            node_cache[:time_multiplier][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0 = index
-        if (match_len = has_terminal?('s', false, index))
-          r1 = true
-          @index += match_len
+        if has_terminal?('s', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           terminal_parse_failure('s')
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(TimeMultiplier0)
         else
-          if (match_len = has_terminal?('S', false, index))
-            r2 = true
-            @index += match_len
+          if has_terminal?('S', false, index)
+            r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure('S')
             r2 = nil
           end
           if r2
-            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
             r0 = r2
             r0.extend(TimeMultiplier0)
           else
-            if (match_len = has_terminal?('m', false, index))
-              r3 = true
-              @index += match_len
+            if has_terminal?('m', false, index)
+              r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure('m')
               r3 = nil
             end
             if r3
-              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
               r0 = r3
               r0.extend(TimeMultiplier0)
             else
-              if (match_len = has_terminal?('M', false, index))
-                r4 = true
-                @index += match_len
+              if has_terminal?('M', false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
               else
                 terminal_parse_failure('M')
                 r4 = nil
               end
               if r4
-                r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
                 r0 = r4
                 r0.extend(TimeMultiplier0)
               else
-                if (match_len = has_terminal?('h', false, index))
-                  r5 = true
-                  @index += match_len
+                if has_terminal?('h', false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure('h')
                   r5 = nil
                 end
                 if r5
-                  r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
                   r0 = r5
                   r0.extend(TimeMultiplier0)
                 else
-                  if (match_len = has_terminal?('H', false, index))
-                    r6 = true
-                    @index += match_len
+                  if has_terminal?('H', false, index)
+                    r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure('H')
                     r6 = nil
                   end
                   if r6
-                    r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
                     r0 = r6
                     r0.extend(TimeMultiplier0)
                   else
-                    if (match_len = has_terminal?('d', false, index))
-                      r7 = true
-                      @index += match_len
+                    if has_terminal?('d', false, index)
+                      r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                      @index += 1
                     else
                       terminal_parse_failure('d')
                       r7 = nil
                     end
                     if r7
-                      r7 = SyntaxNode.new(input, (index-1)...index) if r7 == true
                       r0 = r7
                       r0.extend(TimeMultiplier0)
                     else
-                      if (match_len = has_terminal?('D', false, index))
-                        r8 = true
-                        @index += match_len
+                      if has_terminal?('D', false, index)
+                        r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                        @index += 1
                       else
                         terminal_parse_failure('D')
                         r8 = nil
                       end
                       if r8
-                        r8 = SyntaxNode.new(input, (index-1)...index) if r8 == true
                         r0 = r8
                         r0.extend(TimeMultiplier0)
                       else
-                        if (match_len = has_terminal?('w', false, index))
-                          r9 = true
-                          @index += match_len
+                        if has_terminal?('w', false, index)
+                          r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                          @index += 1
                         else
                           terminal_parse_failure('w')
                           r9 = nil
                         end
                         if r9
-                          r9 = SyntaxNode.new(input, (index-1)...index) if r9 == true
                           r0 = r9
                           r0.extend(TimeMultiplier0)
                         else
-                          if (match_len = has_terminal?('W', false, index))
-                            r10 = true
-                            @index += match_len
+                          if has_terminal?('W', false, index)
+                            r10 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                            @index += 1
                           else
                             terminal_parse_failure('W')
                             r10 = nil
                           end
                           if r10
-                            r10 = SyntaxNode.new(input, (index-1)...index) if r10 == true
                             r0 = r10
                             r0.extend(TimeMultiplier0)
                           else
-                            if (match_len = has_terminal?('', false, index))
-                              r11 = true
-                              @index += match_len
+                            if has_terminal?('', false, index)
+                              r11 = instantiate_node(SyntaxNode,input, index...(index + 0))
+                              @index += 0
                             else
                               terminal_parse_failure('')
                               r11 = nil
                             end
                             if r11
-                              r11 = SyntaxNode.new(input, (index-1)...index) if r11 == true
                               r0 = r11
                               r0.extend(TimeMultiplier0)
                             else
@@ -3659,7 +3602,7 @@ module DNS
         if node_cache[:reretry].has_key?(index)
           cached = node_cache[:reretry][index]
           if cached
-            node_cache[:reretry][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3716,7 +3659,7 @@ module DNS
         if node_cache[:expiry].has_key?(index)
           cached = node_cache[:expiry][index]
           if cached
-            node_cache[:expiry][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3773,7 +3716,7 @@ module DNS
         if node_cache[:nxttl].has_key?(index)
           cached = node_cache[:nxttl][index]
           if cached
-            node_cache[:nxttl][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3833,7 +3776,7 @@ module DNS
         if node_cache[:ttl].has_key?(index)
           cached = node_cache[:ttl][index]
           if cached
-            node_cache[:ttl][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3855,19 +3798,17 @@ module DNS
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(Ttl1)
         else
-          if (match_len = has_terminal?('', false, index))
-            r4 = true
-            @index += match_len
+          if has_terminal?('', false, index)
+            r4 = instantiate_node(SyntaxNode,input, index...(index + 0))
+            @index += 0
           else
             terminal_parse_failure('')
             r4 = nil
           end
           if r4
-            r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
             r0 = r4
             r0.extend(Ttl1)
           else
@@ -3899,7 +3840,7 @@ module DNS
         if node_cache[:host].has_key?(index)
           cached = node_cache[:host][index]
           if cached
-            node_cache[:host][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3908,49 +3849,44 @@ module DNS
         i0 = index
         r1 = _nt_hostname
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(Host0)
         else
           r2 = _nt_wildcard_hostname
           if r2
-            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
             r0 = r2
             r0.extend(Host0)
           else
-            if (match_len = has_terminal?("@", false, index))
-              r3 = true
-              @index += match_len
+            if has_terminal?("@", false, index)
+              r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure("@")
               r3 = nil
             end
             if r3
-              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
               r0 = r3
               r0.extend(Host0)
             else
-              if (match_len = has_terminal?(' ', false, index))
-                r4 = true
-                @index += match_len
+              if has_terminal?(' ', false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
               else
                 terminal_parse_failure(' ')
                 r4 = nil
               end
               if r4
-                r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
                 r0 = r4
                 r0.extend(Host0)
               else
-                if (match_len = has_terminal?("\t", false, index))
-                  r5 = true
-                  @index += match_len
+                if has_terminal?("\t", false, index)
+                  r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure("\t")
                   r5 = nil
                 end
                 if r5
-                  r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
                   r0 = r5
                   r0.extend(Host0)
                 else
@@ -3987,7 +3923,7 @@ module DNS
         if node_cache[:wildcard_hostname].has_key?(index)
           cached = node_cache[:wildcard_hostname][index]
           if cached
-            node_cache[:wildcard_hostname][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -3997,18 +3933,16 @@ module DNS
         i1 = index
         r2 = _nt_hostname
         if r2
-          r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
           r1 = r2
         else
-          if (match_len = has_terminal?('*', false, index))
-            r3 = true
-            @index += match_len
+          if has_terminal?('*', false, index)
+            r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure('*')
             r3 = nil
           end
           if r3
-            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
             r1 = r3
           else
             @index = i1
@@ -4018,9 +3952,9 @@ module DNS
         s0 << r1
         if r1
           i5, s5 = index, []
-          if (match_len = has_terminal?('.', false, index))
-            r6 = true
-            @index += match_len
+          if has_terminal?('.', false, index)
+            r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure('.')
             r6 = nil
@@ -4081,7 +4015,7 @@ module DNS
         if node_cache[:hostname].has_key?(index)
           cached = node_cache[:hostname][index]
           if cached
-            node_cache[:hostname][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4094,9 +4028,9 @@ module DNS
           s2, i2 = [], index
           loop do
             i3, s3 = index, []
-            if (match_len = has_terminal?('.', false, index))
-              r4 = true
-              @index += match_len
+            if has_terminal?('.', false, index)
+              r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure('.')
               r4 = nil
@@ -4122,9 +4056,9 @@ module DNS
           r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
           s0 << r2
           if r2
-            if (match_len = has_terminal?('.', false, index))
-              r7 = true
-              @index += match_len
+            if has_terminal?('.', false, index)
+              r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure('.')
               r7 = nil
@@ -4162,7 +4096,7 @@ module DNS
         if node_cache[:dns_label].has_key?(index)
           cached = node_cache[:dns_label][index]
           if cached
-            node_cache[:dns_label][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4201,28 +4135,26 @@ module DNS
         if node_cache[:dns_label_char].has_key?(index)
           cached = node_cache[:dns_label_char][index]
           if cached
-            node_cache[:dns_label_char][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0 = index
-        if (match_len = has_terminal?('-', false, index))
-          r1 = true
-          @index += match_len
+        if has_terminal?('-', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           terminal_parse_failure('-')
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(DnsLabelChar0)
         else
           r2 = _nt_dns_label_char_nodash
           if r2
-            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
             r0 = r2
             r0.extend(DnsLabelChar0)
           else
@@ -4247,18 +4179,17 @@ module DNS
         if node_cache[:dns_label_char_nodash].has_key?(index)
           cached = node_cache[:dns_label_char_nodash][index]
           if cached
-            node_cache[:dns_label_char_nodash][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
-        if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9_]'] ||= Regexp.new(gr), :regexp, index)
+        if has_terminal?('\G[a-zA-Z0-9_]', true, index)
           r0 = instantiate_node(SyntaxNode,input, index...(index + 1))
           r0.extend(DnsLabelCharNodash0)
           @index += 1
         else
-          terminal_parse_failure('[a-zA-Z0-9_]')
           r0 = nil
         end
 
@@ -4284,7 +4215,7 @@ module DNS
         if node_cache[:wildcard_mail_address].has_key?(index)
           cached = node_cache[:wildcard_mail_address][index]
           if cached
-            node_cache[:wildcard_mail_address][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4292,20 +4223,18 @@ module DNS
 
         i0, s0 = index, []
         i1 = index
-        if (match_len = has_terminal?("*", false, index))
-          r2 = true
-          @index += match_len
+        if has_terminal?("*", false, index)
+          r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           terminal_parse_failure("*")
           r2 = nil
         end
         if r2
-          r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
           r1 = r2
         else
           r3 = _nt_mail_localpart
           if r3
-            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
             r1 = r3
           else
             @index = i1
@@ -4314,9 +4243,9 @@ module DNS
         end
         s0 << r1
         if r1
-          if (match_len = has_terminal?("@", false, index))
-            r4 = true
-            @index += match_len
+          if has_terminal?("@", false, index)
+            r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure("@")
             r4 = nil
@@ -4365,7 +4294,7 @@ module DNS
         if node_cache[:mail_address_list].has_key?(index)
           cached = node_cache[:mail_address_list][index]
           if cached
-            node_cache[:mail_address_list][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4378,9 +4307,9 @@ module DNS
           s2, i2 = [], index
           loop do
             i3, s3 = index, []
-            if (match_len = has_terminal?(',', false, index))
-              r4 = true
-              @index += match_len
+            if has_terminal?(',', false, index)
+              r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure(',')
               r4 = nil
@@ -4441,7 +4370,7 @@ module DNS
         if node_cache[:mail_address].has_key?(index)
           cached = node_cache[:mail_address][index]
           if cached
-            node_cache[:mail_address][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4451,9 +4380,9 @@ module DNS
         r1 = _nt_mail_localpart
         s0 << r1
         if r1
-          if (match_len = has_terminal?("@", false, index))
-            r2 = true
-            @index += match_len
+          if has_terminal?("@", false, index)
+            r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure("@")
             r2 = nil
@@ -4489,7 +4418,7 @@ module DNS
         if node_cache[:mail_localpart].has_key?(index)
           cached = node_cache[:mail_localpart][index]
           if cached
-            node_cache[:mail_localpart][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4498,20 +4427,17 @@ module DNS
         s0, i0 = [], index
         loop do
           i1 = index
-          if has_terminal?(@regexps[gr = '\A[-+]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[-+]', true, index)
             r2 = true
             @index += 1
           else
-            terminal_parse_failure('[-+]')
             r2 = nil
           end
           if r2
-            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
             r1 = r2
           else
             r3 = _nt_dns_label_char
             if r3
-              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
               r1 = r3
             else
               @index = i1
@@ -4548,7 +4474,7 @@ module DNS
         if node_cache[:data].has_key?(index)
           cached = node_cache[:data][index]
           if cached
-            node_cache[:data][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
@@ -4556,11 +4482,10 @@ module DNS
 
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[^;\\n\\r]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[^;\\n\\r]', true, index)
             r1 = true
             @index += 1
           else
-            terminal_parse_failure('[^;\\n\\r]')
             r1 = nil
           end
           if r1
@@ -4609,16 +4534,16 @@ module DNS
         if node_cache[:txt_data].has_key?(index)
           cached = node_cache[:txt_data][index]
           if cached
-            node_cache[:txt_data][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0, s0 = index, []
-        if (match_len = has_terminal?('"', false, index))
-          r2 = true
-          @index += match_len
+        if has_terminal?('"', false, index)
+          r2 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           terminal_parse_failure('"')
           r2 = nil
@@ -4633,22 +4558,21 @@ module DNS
           s3, i3 = [], index
           loop do
             i4 = index
-            if (match_len = has_terminal?('\\"', false, index))
-              r5 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
+            if has_terminal?('\\"', false, index)
+              r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
+              @index += 2
             else
               terminal_parse_failure('\\"')
               r5 = nil
             end
             if r5
-              r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
               r4 = r5
             else
               i6, s6 = index, []
               i7 = index
-              if (match_len = has_terminal?('"', false, index))
-                r8 = true
-                @index += match_len
+              if has_terminal?('"', false, index)
+                r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
               else
                 terminal_parse_failure('"')
                 r8 = nil
@@ -4661,11 +4585,10 @@ module DNS
               end
               s6 << r7
               if r7
-                if has_terminal?(@regexps[gr = '\A[^\\n\\r]'] ||= Regexp.new(gr), :regexp, index)
+                if has_terminal?('\G[^\\n\\r]', true, index)
                   r9 = true
                   @index += 1
                 else
-                  terminal_parse_failure('[^\\n\\r]')
                   r9 = nil
                 end
                 s6 << r9
@@ -4678,7 +4601,6 @@ module DNS
                 r6 = nil
               end
               if r6
-                r6 = SyntaxNode.new(input, (index-1)...index) if r6 == true
                 r4 = r6
               else
                 @index = i4
@@ -4694,9 +4616,9 @@ module DNS
           r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
           s0 << r3
           if r3
-            if (match_len = has_terminal?('"', false, index))
-              r11 = true
-              @index += match_len
+            if has_terminal?('"', false, index)
+              r11 = instantiate_node(SyntaxNode,input, index...(index + 1))
+              @index += 1
             else
               terminal_parse_failure('"')
               r11 = nil
@@ -4714,9 +4636,9 @@ module DNS
                 r14 = _nt_space
                 s13 << r14
                 if r14
-                  if (match_len = has_terminal?('"', false, index))
-                    r15 = true
-                    @index += match_len
+                  if has_terminal?('"', false, index)
+                    r15 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure('"')
                     r15 = nil
@@ -4726,22 +4648,21 @@ module DNS
                     s16, i16 = [], index
                     loop do
                       i17 = index
-                      if (match_len = has_terminal?('\\"', false, index))
-                        r18 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-                        @index += match_len
+                      if has_terminal?('\\"', false, index)
+                        r18 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                        @index += 2
                       else
                         terminal_parse_failure('\\"')
                         r18 = nil
                       end
                       if r18
-                        r18 = SyntaxNode.new(input, (index-1)...index) if r18 == true
                         r17 = r18
                       else
                         i19, s19 = index, []
                         i20 = index
-                        if (match_len = has_terminal?('"', false, index))
-                          r21 = true
-                          @index += match_len
+                        if has_terminal?('"', false, index)
+                          r21 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                          @index += 1
                         else
                           terminal_parse_failure('"')
                           r21 = nil
@@ -4754,11 +4675,10 @@ module DNS
                         end
                         s19 << r20
                         if r20
-                          if has_terminal?(@regexps[gr = '\A[^\\n\\r]'] ||= Regexp.new(gr), :regexp, index)
+                          if has_terminal?('\G[^\\n\\r]', true, index)
                             r22 = true
                             @index += 1
                           else
-                            terminal_parse_failure('[^\\n\\r]')
                             r22 = nil
                           end
                           s19 << r22
@@ -4771,7 +4691,6 @@ module DNS
                           r19 = nil
                         end
                         if r19
-                          r19 = SyntaxNode.new(input, (index-1)...index) if r19 == true
                           r17 = r19
                         else
                           @index = i17
@@ -4787,9 +4706,9 @@ module DNS
                     r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
                     s13 << r16
                     if r16
-                      if (match_len = has_terminal?('"', false, index))
-                        r23 = true
-                        @index += match_len
+                      if has_terminal?('"', false, index)
+                        r23 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                        @index += 1
                       else
                         terminal_parse_failure('"')
                         r23 = nil
@@ -4841,46 +4760,43 @@ module DNS
         if node_cache[:forward_type].has_key?(index)
           cached = node_cache[:forward_type][index]
           if cached
-            node_cache[:forward_type][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0 = index
-        if (match_len = has_terminal?("permanent", false, index))
-          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-          @index += match_len
+        if has_terminal?("permanent", false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 9))
+          @index += 9
         else
           terminal_parse_failure("permanent")
           r1 = nil
         end
         if r1
-          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(ForwardType0)
         else
-          if (match_len = has_terminal?("temporary", false, index))
-            r2 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-            @index += match_len
+          if has_terminal?("temporary", false, index)
+            r2 = instantiate_node(SyntaxNode,input, index...(index + 9))
+            @index += 9
           else
             terminal_parse_failure("temporary")
             r2 = nil
           end
           if r2
-            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
             r0 = r2
             r0.extend(ForwardType0)
           else
-            if (match_len = has_terminal?("frame", false, index))
-              r3 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
+            if has_terminal?("frame", false, index)
+              r3 = instantiate_node(SyntaxNode,input, index...(index + 5))
+              @index += 5
             else
               terminal_parse_failure("frame")
               r3 = nil
             end
             if r3
-              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
               r0 = r3
               r0.extend(ForwardType0)
             else
@@ -4909,27 +4825,26 @@ module DNS
         if node_cache[:http_uri].has_key?(index)
           cached = node_cache[:http_uri][index]
           if cached
-            node_cache[:http_uri][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
           end
           return cached
         end
 
         i0, s0 = index, []
-        if (match_len = has_terminal?('http', false, index))
-          r1 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-          @index += match_len
+        if has_terminal?('http', false, index)
+          r1 = instantiate_node(SyntaxNode,input, index...(index + 4))
+          @index += 4
         else
           terminal_parse_failure('http')
           r1 = nil
         end
         s0 << r1
         if r1
-          if has_terminal?(@regexps[gr = '\A[s]'] ||= Regexp.new(gr), :regexp, index)
+          if has_terminal?('\G[s]', true, index)
             r3 = true
             @index += 1
           else
-            terminal_parse_failure('[s]')
             r3 = nil
           end
           if r3
@@ -4939,9 +4854,9 @@ module DNS
           end
           s0 << r2
           if r2
-            if (match_len = has_terminal?('://', false, index))
-              r4 = instantiate_node(SyntaxNode,input, index...(index + match_len))
-              @index += match_len
+            if has_terminal?('://', false, index)
+              r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+              @index += 3
             else
               terminal_parse_failure('://')
               r4 = nil
@@ -4950,11 +4865,10 @@ module DNS
             if r4
               s5, i5 = [], index
               loop do
-                if has_terminal?(@regexps[gr = '\A[^\\s]'] ||= Regexp.new(gr), :regexp, index)
+                if has_terminal?('\G[^\\s]', true, index)
                   r6 = true
                   @index += 1
                 else
-                  terminal_parse_failure('[^\\s]')
                   r6 = nil
                 end
                 if r6

@@ -374,14 +374,30 @@ ZONE
   end
 
   describe "parsing pseudo-records" do
-    it "should parse mail forwarding pseudo-records" do
-      zone = DNS::Zonefile.load(<<-MZONE
-example.com         86400 IN SOA ns0.example.com. hostmaster.example.com. 2006010558 43200 3600 1209600 180
+    before(:all) do
+      @zonefile = DNS::Zonefile.load(<<-MZONE
+$ORIGIN example.com.
+example.com         86400 IN SOA ns0.example.com. hostmaster.example.com. (
+    2006010558
+    43200
+    3600
+    1209600
+    180)
+
 bob@example.com      3600 IN X-MAIL-FWD bob@example.org
 bob@sub.example.com  3600 IN X-MAIL-FWD sub-bob@example.org
+*@sub2.example.com    300 IN X-MAIL-FWD wildcard@example.org
+list@l.example.com    300 IN X-MAIL-FWD a@example.org,b@example.org
+
+example.com.       3600 IN X-WEB-FWD permanent https://www.example.org/
+fqdn.example.com.       IN X-WEB-FWD temporary https://fqdn.example.org/
+www                 300 IN X-WEB-FWD frame http://www.example.org/
 MZONE
 )
-      mfwds = zone.records_of DNS::Zonefile::X_MAIL_FWD
+    end
+
+    it "should parse mail forwarding pseudo-records" do
+      mfwds = @zonefile.records_of DNS::Zonefile::X_MAIL_FWD
 
       root_bob = mfwds.detect {|r| r.recipient == 'bob@example.com' }
       root_bob.should_not be_nil
@@ -392,16 +408,25 @@ MZONE
       sub_bob.targets.should eql('sub-bob@example.org')
     end
 
+    it "should support wildcard recipients" do
+      @zonefile.records_of(DNS::Zonefile::X_MAIL_FWD).detect {|r|
+        r.recipient == '*@sub2.example.com'
+      }.should_not be_nil
+    end
+
+    it "should support recipient lists" do
+      rlist = @zonefile.records_of(DNS::Zonefile::X_MAIL_FWD).detect {|r|
+        r.recipient == 'list@l.example.com'
+      }
+
+      rlist.should_not be_nil
+      recs = rlist.targets.split(',')
+      recs.should include('a@example.org')
+      recs.should include('b@example.org')
+    end
+
     it "should parse web forwarding pseudo-records" do
-      zone = DNS::Zonefile.load(<<-WZONE
-$ORIGIN example.com.
-@                 86400 IN SOA ns0.example.com. hostmaster.example.com. 2006010558 43200 3600 1209600 180
-example.com.       3600 IN X-WEB-FWD permanent https://www.example.org/
-fqdn.example.com.       IN X-WEB-FWD temporary https://fqdn.example.org/
-www                 300 IN X-WEB-FWD frame http://www.example.org/
-WZONE
-)
-      fwds = zone.records_of DNS::Zonefile::X_WEB_FWD
+      fwds = @zonefile.records_of DNS::Zonefile::X_WEB_FWD
 
       root_fwd = fwds.detect {|r| r.host == 'example.com.' }
       root_fwd.should_not be_nil

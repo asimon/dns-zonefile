@@ -2603,7 +2603,7 @@ module DNS
         end
 
         i0, s0 = index, []
-        r1 = _nt_mail_address
+        r1 = _nt_wildcard_mail_address
         s0 << r1
         if r1
           r2 = _nt_space
@@ -2627,7 +2627,7 @@ module DNS
                   r6 = _nt_space
                   s0 << r6
                   if r6
-                    r7 = _nt_txt_data
+                    r7 = _nt_mail_address_list
                     s0 << r7
                   end
                 end
@@ -3906,70 +3906,57 @@ module DNS
         end
 
         i0 = index
-        s1, i1 = [], index
-        loop do
-          if has_terminal?(@regexps[gr = '\A[*a-zA-Z0-9\\-\\._]'] ||= Regexp.new(gr), :regexp, index)
-            r2 = true
-            @index += 1
-          else
-            terminal_parse_failure('[*a-zA-Z0-9\\-\\._]')
-            r2 = nil
-          end
-          if r2
-            s1 << r2
-          else
-            break
-          end
-        end
-        if s1.empty?
-          @index = i1
-          r1 = nil
-        else
-          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-        end
+        r1 = _nt_hostname
         if r1
           r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
           r0 = r1
           r0.extend(Host0)
         else
-          if (match_len = has_terminal?("@", false, index))
-            r3 = true
-            @index += match_len
-          else
-            terminal_parse_failure("@")
-            r3 = nil
-          end
-          if r3
-            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
-            r0 = r3
+          r2 = _nt_wildcard_hostname
+          if r2
+            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+            r0 = r2
             r0.extend(Host0)
           else
-            if (match_len = has_terminal?(' ', false, index))
-              r4 = true
+            if (match_len = has_terminal?("@", false, index))
+              r3 = true
               @index += match_len
             else
-              terminal_parse_failure(' ')
-              r4 = nil
+              terminal_parse_failure("@")
+              r3 = nil
             end
-            if r4
-              r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
-              r0 = r4
+            if r3
+              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
+              r0 = r3
               r0.extend(Host0)
             else
-              if (match_len = has_terminal?("\t", false, index))
-                r5 = true
+              if (match_len = has_terminal?(' ', false, index))
+                r4 = true
                 @index += match_len
               else
-                terminal_parse_failure("\t")
-                r5 = nil
+                terminal_parse_failure(' ')
+                r4 = nil
               end
-              if r5
-                r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
-                r0 = r5
+              if r4
+                r4 = SyntaxNode.new(input, (index-1)...index) if r4 == true
+                r0 = r4
                 r0.extend(Host0)
               else
-                @index = i0
-                r0 = nil
+                if (match_len = has_terminal?("\t", false, index))
+                  r5 = true
+                  @index += match_len
+                else
+                  terminal_parse_failure("\t")
+                  r5 = nil
+                end
+                if r5
+                  r5 = SyntaxNode.new(input, (index-1)...index) if r5 == true
+                  r0 = r5
+                  r0.extend(Host0)
+                else
+                  @index = i0
+                  r0 = nil
+                end
               end
             end
           end
@@ -3980,7 +3967,470 @@ module DNS
         r0
       end
 
+      module WildcardHostname0
+        def hostname
+          elements[1]
+        end
+      end
+
+      module WildcardHostname1
+      end
+
+      module WildcardHostname2
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_wildcard_hostname
+        start_index = index
+        if node_cache[:wildcard_hostname].has_key?(index)
+          cached = node_cache[:wildcard_hostname][index]
+          if cached
+            node_cache[:wildcard_hostname][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        i1 = index
+        r2 = _nt_hostname
+        if r2
+          r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+          r1 = r2
+        else
+          if (match_len = has_terminal?('*', false, index))
+            r3 = true
+            @index += match_len
+          else
+            terminal_parse_failure('*')
+            r3 = nil
+          end
+          if r3
+            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
+            r1 = r3
+          else
+            @index = i1
+            r1 = nil
+          end
+        end
+        s0 << r1
+        if r1
+          i5, s5 = index, []
+          if (match_len = has_terminal?('.', false, index))
+            r6 = true
+            @index += match_len
+          else
+            terminal_parse_failure('.')
+            r6 = nil
+          end
+          s5 << r6
+          if r6
+            r7 = _nt_hostname
+            s5 << r7
+          end
+          if s5.last
+            r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
+            r5.extend(WildcardHostname0)
+          else
+            @index = i5
+            r5 = nil
+          end
+          if r5
+            r4 = r5
+          else
+            r4 = instantiate_node(SyntaxNode,input, index...index)
+          end
+          s0 << r4
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(WildcardHostname1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:wildcard_hostname][start_index] = r0
+
+        r0
+      end
+
+      module Hostname0
+        def dns_label
+          elements[1]
+        end
+      end
+
+      module Hostname1
+        def dns_label
+          elements[0]
+        end
+
+      end
+
+      module Hostname2
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_hostname
+        start_index = index
+        if node_cache[:hostname].has_key?(index)
+          cached = node_cache[:hostname][index]
+          if cached
+            node_cache[:hostname][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_dns_label
+        s0 << r1
+        if r1
+          s2, i2 = [], index
+          loop do
+            i3, s3 = index, []
+            if (match_len = has_terminal?('.', false, index))
+              r4 = true
+              @index += match_len
+            else
+              terminal_parse_failure('.')
+              r4 = nil
+            end
+            s3 << r4
+            if r4
+              r5 = _nt_dns_label
+              s3 << r5
+            end
+            if s3.last
+              r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+              r3.extend(Hostname0)
+            else
+              @index = i3
+              r3 = nil
+            end
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+          s0 << r2
+          if r2
+            if (match_len = has_terminal?('.', false, index))
+              r7 = true
+              @index += match_len
+            else
+              terminal_parse_failure('.')
+              r7 = nil
+            end
+            if r7
+              r6 = r7
+            else
+              r6 = instantiate_node(SyntaxNode,input, index...index)
+            end
+            s0 << r6
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(Hostname1)
+          r0.extend(Hostname2)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:hostname][start_index] = r0
+
+        r0
+      end
+
+      module DnsLabel0
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_dns_label
+        start_index = index
+        if node_cache[:dns_label].has_key?(index)
+          cached = node_cache[:dns_label][index]
+          if cached
+            node_cache[:dns_label][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        s0, i0 = [], index
+        loop do
+          r1 = _nt_dns_label_char
+          if r1
+            s0 << r1
+          else
+            break
+          end
+        end
+        if s0.empty?
+          @index = i0
+          r0 = nil
+        else
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(DnsLabel0)
+        end
+
+        node_cache[:dns_label][start_index] = r0
+
+        r0
+      end
+
+      module DnsLabelChar0
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_dns_label_char
+        start_index = index
+        if node_cache[:dns_label_char].has_key?(index)
+          cached = node_cache[:dns_label_char][index]
+          if cached
+            node_cache[:dns_label_char][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0 = index
+        if (match_len = has_terminal?('-', false, index))
+          r1 = true
+          @index += match_len
+        else
+          terminal_parse_failure('-')
+          r1 = nil
+        end
+        if r1
+          r1 = SyntaxNode.new(input, (index-1)...index) if r1 == true
+          r0 = r1
+          r0.extend(DnsLabelChar0)
+        else
+          r2 = _nt_dns_label_char_nodash
+          if r2
+            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+            r0 = r2
+            r0.extend(DnsLabelChar0)
+          else
+            @index = i0
+            r0 = nil
+          end
+        end
+
+        node_cache[:dns_label_char][start_index] = r0
+
+        r0
+      end
+
+      module DnsLabelCharNodash0
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_dns_label_char_nodash
+        start_index = index
+        if node_cache[:dns_label_char_nodash].has_key?(index)
+          cached = node_cache[:dns_label_char_nodash][index]
+          if cached
+            node_cache[:dns_label_char_nodash][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        if has_terminal?(@regexps[gr = '\A[a-zA-Z0-9_]'] ||= Regexp.new(gr), :regexp, index)
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          r0.extend(DnsLabelCharNodash0)
+          @index += 1
+        else
+          terminal_parse_failure('[a-zA-Z0-9_]')
+          r0 = nil
+        end
+
+        node_cache[:dns_label_char_nodash][start_index] = r0
+
+        r0
+      end
+
+      module WildcardMailAddress0
+        def exchange
+          elements[2]
+        end
+      end
+
+      module WildcardMailAddress1
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_wildcard_mail_address
+        start_index = index
+        if node_cache[:wildcard_mail_address].has_key?(index)
+          cached = node_cache[:wildcard_mail_address][index]
+          if cached
+            node_cache[:wildcard_mail_address][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        i1 = index
+        if (match_len = has_terminal?("*", false, index))
+          r2 = true
+          @index += match_len
+        else
+          terminal_parse_failure("*")
+          r2 = nil
+        end
+        if r2
+          r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+          r1 = r2
+        else
+          r3 = _nt_mail_localpart
+          if r3
+            r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
+            r1 = r3
+          else
+            @index = i1
+            r1 = nil
+          end
+        end
+        s0 << r1
+        if r1
+          if (match_len = has_terminal?("@", false, index))
+            r4 = true
+            @index += match_len
+          else
+            terminal_parse_failure("@")
+            r4 = nil
+          end
+          s0 << r4
+          if r4
+            r5 = _nt_wildcard_hostname
+            s0 << r5
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(WildcardMailAddress0)
+          r0.extend(WildcardMailAddress1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:wildcard_mail_address][start_index] = r0
+
+        r0
+      end
+
+      module MailAddressList0
+        def mail_address
+          elements[1]
+        end
+      end
+
+      module MailAddressList1
+        def mail_address
+          elements[0]
+        end
+
+      end
+
+      module MailAddressList2
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_mail_address_list
+        start_index = index
+        if node_cache[:mail_address_list].has_key?(index)
+          cached = node_cache[:mail_address_list][index]
+          if cached
+            node_cache[:mail_address_list][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
+        i0, s0 = index, []
+        r1 = _nt_mail_address
+        s0 << r1
+        if r1
+          s2, i2 = [], index
+          loop do
+            i3, s3 = index, []
+            if (match_len = has_terminal?(',', false, index))
+              r4 = true
+              @index += match_len
+            else
+              terminal_parse_failure(',')
+              r4 = nil
+            end
+            s3 << r4
+            if r4
+              r5 = _nt_mail_address
+              s3 << r5
+            end
+            if s3.last
+              r3 = instantiate_node(SyntaxNode,input, i3...index, s3)
+              r3.extend(MailAddressList0)
+            else
+              @index = i3
+              r3 = nil
+            end
+            if r3
+              s2 << r3
+            else
+              break
+            end
+          end
+          r2 = instantiate_node(SyntaxNode,input, i2...index, s2)
+          s0 << r2
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(MailAddressList1)
+          r0.extend(MailAddressList2)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:mail_address_list][start_index] = r0
+
+        r0
+      end
+
       module MailAddress0
+        def mail_localpart
+          elements[0]
+        end
+
+        def exchange
+          elements[2]
+        end
+      end
+
+      module MailAddress1
         def to_s
           text_value
         end
@@ -3997,14 +4447,76 @@ module DNS
           return cached
         end
 
+        i0, s0 = index, []
+        r1 = _nt_mail_localpart
+        s0 << r1
+        if r1
+          if (match_len = has_terminal?("@", false, index))
+            r2 = true
+            @index += match_len
+          else
+            terminal_parse_failure("@")
+            r2 = nil
+          end
+          s0 << r2
+          if r2
+            r3 = _nt_hostname
+            s0 << r3
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(MailAddress0)
+          r0.extend(MailAddress1)
+        else
+          @index = i0
+          r0 = nil
+        end
+
+        node_cache[:mail_address][start_index] = r0
+
+        r0
+      end
+
+      module MailLocalpart0
+        def to_s
+          text_value
+        end
+      end
+
+      def _nt_mail_localpart
+        start_index = index
+        if node_cache[:mail_localpart].has_key?(index)
+          cached = node_cache[:mail_localpart][index]
+          if cached
+            node_cache[:mail_localpart][index] = cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
+            @index = cached.interval.end
+          end
+          return cached
+        end
+
         s0, i0 = [], index
         loop do
-          if has_terminal?(@regexps[gr = '\A[*a-zA-Z0-9\\-\\.\\+_@]'] ||= Regexp.new(gr), :regexp, index)
-            r1 = true
+          i1 = index
+          if has_terminal?(@regexps[gr = '\A[-+]'] ||= Regexp.new(gr), :regexp, index)
+            r2 = true
             @index += 1
           else
-            terminal_parse_failure('[*a-zA-Z0-9\\-\\.\\+_@]')
-            r1 = nil
+            terminal_parse_failure('[-+]')
+            r2 = nil
+          end
+          if r2
+            r2 = SyntaxNode.new(input, (index-1)...index) if r2 == true
+            r1 = r2
+          else
+            r3 = _nt_dns_label_char
+            if r3
+              r3 = SyntaxNode.new(input, (index-1)...index) if r3 == true
+              r1 = r3
+            else
+              @index = i1
+              r1 = nil
+            end
           end
           if r1
             s0 << r1
@@ -4017,10 +4529,10 @@ module DNS
           r0 = nil
         else
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(MailAddress0)
+          r0.extend(MailLocalpart0)
         end
 
-        node_cache[:mail_address][start_index] = r0
+        node_cache[:mail_localpart][start_index] = r0
 
         r0
       end

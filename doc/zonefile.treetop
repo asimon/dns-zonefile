@@ -209,7 +209,7 @@ grammar Zonefile
   #
   # The targets are a comma-separated list of mail addresses.
   rule x_mail_fwd_record
-    recipient:mail_address space ttl klass "X-MAIL-FWD" space targets:txt_data {
+    recipient:wildcard_mail_address space ttl klass "X-MAIL-FWD" space targets:mail_address_list {
       def to_s
         "#{host} #{ttl} #{klass} X-MAIL-FWD #{targets}"
       end
@@ -401,7 +401,7 @@ grammar Zonefile
   end
 
   rule host
-    ( ([*a-zA-Z0-9\-\._]+) / "@" / ' ' / "\t" ) {
+    ( hostname / wildcard_hostname / "@" / ' ' / "\t" ) {
       def to_s
         case text_value
         when /\.$/
@@ -415,8 +415,77 @@ grammar Zonefile
     }
   end
 
+  # Allow a leading "*" label.
+  rule wildcard_hostname
+    ( ( hostname / '*' ) ( '.' hostname )? ) {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule hostname
+    dns_label ( '.' dns_label )* '.'? {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule dns_label
+    dns_label_char+ {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  # Keep this ambiguation around in case anyone wants to be correct about
+  # the whole "two dashes in 3rd and 4th place" rule.
+  rule dns_label_char
+    ( '-' / dns_label_char_nodash ) {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule dns_label_char_nodash
+    [a-zA-Z0-9_] {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  # Allow mail addresses that are catch-alls ("*" localpart) or "match"
+  # multiple hosts by using a wildcard hostname.
+  rule wildcard_mail_address
+    ( "*" /  mail_localpart ) "@" exchange:wildcard_hostname {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule mail_address_list
+    mail_address ( ',' mail_address )* {
+      def to_s
+        text_value
+      end
+    }
+  end
+
   rule mail_address
-    [*a-zA-Z0-9\-\.\+_@]+ {
+    mail_localpart "@" exchange:hostname {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule mail_localpart
+    ( [-+] / dns_label_char )+ {
       def to_s
         text_value
       end

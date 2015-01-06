@@ -372,4 +372,52 @@ ZONE
       soa.nxttl.should eql(180)
     end
   end
+
+  describe "parsing pseudo-records" do
+    it "should parse mail forwarding pseudo-records" do
+      zone = DNS::Zonefile.load(<<-MZONE
+example.com         86400 IN SOA ns0.example.com. hostmaster.example.com. 2006010558 43200 3600 1209600 180
+bob@example.com      3600 IN X-MAIL-FWD bob@example.org
+bob@sub.example.com  3600 IN X-MAIL-FWD sub-bob@example.org
+MZONE
+)
+      mfwds = zone.records_of DNS::Zonefile::X_MAIL_FWD
+
+      root_bob = mfwds.detect {|r| r.recipient == 'bob@example.com' }
+      root_bob.should_not be_nil
+      root_bob.targets.should eql('bob@example.org')
+
+      sub_bob = mfwds.detect {|r| r.recipient == 'bob@sub.example.com' }
+      sub_bob.should_not be_nil
+      sub_bob.targets.should eql('sub-bob@example.org')
+    end
+
+    it "should parse web forwarding pseudo-records" do
+      zone = DNS::Zonefile.load(<<-WZONE
+$ORIGIN example.com.
+@                 86400 IN SOA ns0.example.com. hostmaster.example.com. 2006010558 43200 3600 1209600 180
+example.com.       3600 IN X-WEB-FWD permanent https://www.example.org/
+fqdn.example.com.       IN X-WEB-FWD temporary https://fqdn.example.org/
+www                 300 IN X-WEB-FWD frame http://www.example.org/
+WZONE
+)
+      fwds = zone.records_of DNS::Zonefile::X_WEB_FWD
+
+      root_fwd = fwds.detect {|r| r.host == 'example.com.' }
+      root_fwd.should_not be_nil
+      root_fwd.type.should eql('permanent')
+      root_fwd.target.should eql('https://www.example.org/')
+
+      fq_fwd = fwds.detect {|r| r.host == 'fqdn.example.com.' }
+      fq_fwd.should_not be_nil
+      fq_fwd.type.should eql('temporary')
+      fq_fwd.target.should eql('https://fqdn.example.org/')
+
+      www_fwd = fwds.detect {|r| r.host == 'www.example.com.' }
+      www_fwd.should_not be_nil
+      www_fwd.type.should eql('frame')
+      www_fwd.target.should eql('http://www.example.org/')
+    end
+
+  end
 end

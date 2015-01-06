@@ -53,7 +53,7 @@ grammar Zonefile
   end
 
   rule resource_record
-    record:(a_record / aaaa_record / cname_record / mx_record / naptr_record / ns_record / ptr_record / srv_record / spf_record / txt_record / soa_record) space* comment? linebreak {
+    record:(a_record / aaaa_record / cname_record / mx_record / naptr_record / ns_record / ptr_record / srv_record / spf_record / txt_record / soa_record / x_mail_fwd_record / x_web_fwd_record) space* comment? linebreak {
       def zone
         p = parent
         while p.respond_to?(:parent) && p.parent
@@ -168,7 +168,7 @@ grammar Zonefile
   rule soa_record
     origin space ttl klass "SOA" space ns space rp space data {
       def to_s
-        "#{origin} #{ttl} #{klass} SOA #{ns} #{rp} (#{space})"
+        "#{origin} #{ttl} #{klass} SOA #{ns} #{rp} (#{data})"
       end
     }
   end
@@ -198,6 +198,33 @@ grammar Zonefile
     host space ttl klass "TXT" space data:txt_data {
       def to_s
         "#{host} #{ttl} #{klass} TXT #{data}"
+      end
+    }
+  end
+
+  # Pseudo-type to describe mail forwards.
+  #
+  # Instead of a host, expect a recipient, which is a "fully qualified mail
+  # address", hopefully in the described zone.
+  #
+  # The targets are a comma-separated list of mail addresses.
+  rule x_mail_fwd_record
+    recipient:mail_address space ttl klass "X-MAIL-FWD" space targets:txt_data {
+      def to_s
+        "#{host} #{ttl} #{klass} X-MAIL-FWD #{targets}"
+      end
+    }
+  end
+
+  # Pseudo-type to decribe web forwardings.
+  #
+  # The "type" field describes the type of the forwarding, likely 301 or 302.
+  #
+  # The target is a URI.
+  rule x_web_fwd_record
+    host space ttl klass "X-WEB-FWD" space type:forward_type space target:http_uri {
+      def to_s
+        "#{host} #{ttl} #{klass} X-WEB-FWD #{type} #{target}"
       end
     }
   end
@@ -388,6 +415,14 @@ grammar Zonefile
     }
   end
 
+  rule mail_address
+    [*a-zA-Z0-9\-\.\+_@]+ {
+      def to_s
+        text_value
+      end
+    }
+  end
+
   rule data
     [^;\n\r]+ {
       def to_s
@@ -395,7 +430,7 @@ grammar Zonefile
       end
     }
   end
-  
+
   rule txt_data
     '"'? ('\\"' / !'"' [^\n\r])* '"'? (space '"' ('\\"' / !'"' [^\n\r])* '"')* {
       def to_s
@@ -403,4 +438,21 @@ grammar Zonefile
       end
     }
   end
+
+  rule forward_type
+    ( "permanent" / "temporary" / "frame" ) {
+      def to_s
+        text_value
+      end
+    }
+  end
+
+  rule http_uri
+    'http' [s]? '://' [^\s]+ {
+      def to_s
+        text_value
+      end
+    }
+  end
+
 end

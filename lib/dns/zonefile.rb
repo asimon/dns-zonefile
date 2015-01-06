@@ -51,6 +51,8 @@ module DNS
 	    when 'SPF'    then @records << SPF.new(@vars, e)
 	    when 'TXT'    then @records << TXT.new(@vars, e)
 	    when 'SOA'    then ;
+	    when 'X-MAIL-FWD' then @records << X_MAIL_FWD.new(@vars, e)
+	    when 'X-WEB-FWD'  then @records << X_WEB_FWD.new(@vars, e)
 	    else
 	      raise UnknownRecordType, "Unknown record type: #{e.record_type}"
 	    end
@@ -71,19 +73,18 @@ module DNS
       # assign, with handling for '@'
       def self.writer_for_at(*attribs)
 	attribs.each do |attrib|
-	  c = <<-MTH
+	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
 	      @#{attrib} = val.gsub('@', @vars['origin'])
 	    end
 	  MTH
-	  class_eval c, __FILE__, __LINE__
 	end
       end
 
       # assign, with handling for '@', with inheritance
       def self.inheriting_writer_for_at(*attribs)
 	attribs.each do |attrib|
-	  c = <<-MTH
+	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
 	      if val.strip.empty?
 		@#{attrib} = @vars[:last_host]
@@ -92,19 +93,17 @@ module DNS
 	      end
 	    end
 	  MTH
-	  class_eval c, __FILE__, __LINE__
 	end
       end
 
       # assign, with handling for global TTL
       def self.writer_for_ttl(*attribs)
 	attribs.each do |attrib|
-	  c = <<-MTH
+	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
 	      @#{attrib} = val || @vars['ttl']
 	    end
 	  MTH
-	  class_eval c, __FILE__, __LINE__
 	end
       end
 
@@ -304,5 +303,50 @@ module DNS
 
     class SPF < TXT
     end
+
+    class X_MAIL_FWD < Record
+      attr_accessor :recipient, :targets
+
+      def initialize(vars, zonefile_record)
+	@vars = vars
+
+	if zonefile_record
+	  self.recipient = zonefile_record.recipient.to_s
+	  @vars[:last_host] = self.host
+	  self.ttl = zonefile_record.ttl.to_i
+	  self.klass = zonefile_record.klass.to_s
+	  self.targets = zonefile_record.targets.to_s
+	end
+      end
+
+      def host
+	recipient.split('@', 2).last
+      end
+
+      def host=(s)
+	r_local = recipient.split('@', 2).first
+	self.recipient = "#{r_local}@#{s}"
+      end
+    end
+
+    class X_WEB_FWD < Record
+      attr_accessor :host, :type, :target
+
+      inheriting_writer_for_at :host
+
+      def initialize(vars, zonefile_record)
+	@vars = vars
+
+	if zonefile_record
+	  self.host = zonefile_record.host.to_s
+	  @vars[:last_host] = self.host
+	  self.ttl = zonefile_record.ttl.to_i
+	  self.klass = zonefile_record.klass.to_s
+	  self.type = zonefile_record.type.to_s
+	  self.target = zonefile_record.target.to_s
+	end
+      end
+    end
+
   end
 end

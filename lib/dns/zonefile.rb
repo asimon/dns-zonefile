@@ -350,3 +350,5 @@ module DNS
 
   end
 end
+
+# vim: ts=8 sw=2 noexpandtab

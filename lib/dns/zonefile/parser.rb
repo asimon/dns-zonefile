@@ -20,17 +20,6 @@ module DNS
       end
 
       module Zone1
-        def variables
-          @variables ||= begin
-            raw = elements[0].elements.select { |e| e.to_s =~ /^\$/ }
-            variables = {}
-            raw.each do |e|
-              variables[e.name.text_value.to_s] = e.value.text_value.to_s
-            end
-            variables
-          end
-        end
-
         def origin
           soa.origin.host.to_s
         end
@@ -282,68 +271,64 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
-          elements[3]
-        end
-
         def space2
-          elements[5]
+          elements[4]
         end
 
         def ns
-          elements[6]
+          elements[5]
         end
 
         def space3
-          elements[7]
+          elements[6]
         end
 
         def rp
-          elements[8]
+          elements[7]
         end
 
         def space4
-          elements[9]
+          elements[8]
         end
 
         def serial
-          elements[12]
+          elements[11]
         end
 
         def space_or_break1
-          elements[13]
+          elements[12]
         end
 
         def refresh
-          elements[14]
+          elements[13]
         end
 
         def space_or_break2
-          elements[15]
+          elements[14]
         end
 
         def reretry
-          elements[16]
+          elements[15]
         end
 
         def space_or_break3
-          elements[17]
+          elements[16]
         end
 
         def expiry
-          elements[18]
+          elements[17]
         end
 
         def space_or_break4
-          elements[19]
+          elements[18]
         end
 
         def nxttl
-          elements[20]
+          elements[19]
         end
 
       end
@@ -354,6 +339,8 @@ module DNS
         end
 
         def parse_type ; :soa ; end
+        def ttl; ttl_and_klass.ttl; end
+        def klass; ttl_and_klass.klass; end
       end
 
       def _nt_soa
@@ -374,115 +361,111 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("SOA", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("SOA")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("SOA", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("SOA")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_ns
                   s0 << r6
                   if r6
-                    r7 = _nt_ns
+                    r7 = _nt_space
                     s0 << r7
                     if r7
-                      r8 = _nt_space
+                      r8 = _nt_rp
                       s0 << r8
                       if r8
-                        r9 = _nt_rp
+                        r9 = _nt_space
                         s0 << r9
                         if r9
-                          r10 = _nt_space
+                          if has_terminal?("(", false, index)
+                            r11 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                            @index += 1
+                          else
+                            terminal_parse_failure("(")
+                            r11 = nil
+                          end
+                          if r11
+                            r10 = r11
+                          else
+                            r10 = instantiate_node(SyntaxNode,input, index...index)
+                          end
                           s0 << r10
                           if r10
-                            if has_terminal?("(", false, index)
-                              r12 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                              @index += 1
-                            else
-                              terminal_parse_failure("(")
-                              r12 = nil
-                            end
-                            if r12
-                              r11 = r12
-                            else
-                              r11 = instantiate_node(SyntaxNode,input, index...index)
-                            end
-                            s0 << r11
-                            if r11
-                              s13, i13 = [], index
-                              loop do
-                                r14 = _nt_space_or_break
-                                if r14
-                                  s13 << r14
-                                else
-                                  break
-                                end
-                              end
-                              r13 = instantiate_node(SyntaxNode,input, i13...index, s13)
-                              s0 << r13
+                            s12, i12 = [], index
+                            loop do
+                              r13 = _nt_space_or_break
                               if r13
-                                r15 = _nt_serial
+                                s12 << r13
+                              else
+                                break
+                              end
+                            end
+                            r12 = instantiate_node(SyntaxNode,input, i12...index, s12)
+                            s0 << r12
+                            if r12
+                              r14 = _nt_serial
+                              s0 << r14
+                              if r14
+                                r15 = _nt_space_or_break
                                 s0 << r15
                                 if r15
-                                  r16 = _nt_space_or_break
+                                  r16 = _nt_refresh
                                   s0 << r16
                                   if r16
-                                    r17 = _nt_refresh
+                                    r17 = _nt_space_or_break
                                     s0 << r17
                                     if r17
-                                      r18 = _nt_space_or_break
+                                      r18 = _nt_reretry
                                       s0 << r18
                                       if r18
-                                        r19 = _nt_reretry
+                                        r19 = _nt_space_or_break
                                         s0 << r19
                                         if r19
-                                          r20 = _nt_space_or_break
+                                          r20 = _nt_expiry
                                           s0 << r20
                                           if r20
-                                            r21 = _nt_expiry
+                                            r21 = _nt_space_or_break
                                             s0 << r21
                                             if r21
-                                              r22 = _nt_space_or_break
+                                              r22 = _nt_nxttl
                                               s0 << r22
                                               if r22
-                                                r23 = _nt_nxttl
+                                                s23, i23 = [], index
+                                                loop do
+                                                  r24 = _nt_space_or_break
+                                                  if r24
+                                                    s23 << r24
+                                                  else
+                                                    break
+                                                  end
+                                                end
+                                                r23 = instantiate_node(SyntaxNode,input, i23...index, s23)
                                                 s0 << r23
                                                 if r23
-                                                  s24, i24 = [], index
-                                                  loop do
-                                                    r25 = _nt_space_or_break
-                                                    if r25
-                                                      s24 << r25
-                                                    else
-                                                      break
-                                                    end
+                                                  if has_terminal?(")", false, index)
+                                                    r26 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                                                    @index += 1
+                                                  else
+                                                    terminal_parse_failure(")")
+                                                    r26 = nil
                                                   end
-                                                  r24 = instantiate_node(SyntaxNode,input, i24...index, s24)
-                                                  s0 << r24
-                                                  if r24
-                                                    if has_terminal?(")", false, index)
-                                                      r27 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                                                      @index += 1
-                                                    else
-                                                      terminal_parse_failure(")")
-                                                      r27 = nil
-                                                    end
-                                                    if r27
-                                                      r26 = r27
-                                                    else
-                                                      r26 = instantiate_node(SyntaxNode,input, index...index)
-                                                    end
-                                                    s0 << r26
+                                                  if r26
+                                                    r25 = r26
+                                                  else
+                                                    r25 = instantiate_node(SyntaxNode,input, index...index)
                                                   end
+                                                  s0 << r25
                                                 end
                                               end
                                             end
@@ -519,16 +502,22 @@ module DNS
       end
 
       module ResourceRecord0
+        def comment
+          elements[1]
+        end
+      end
+
+      module ResourceRecord1
         def record
           elements[0]
         end
 
         def linebreak
-          elements[3]
+          elements[2]
         end
       end
 
-      module ResourceRecord1
+      module ResourceRecord2
         def zone
           p = parent
           while p.respond_to?(:parent) && p.parent
@@ -538,15 +527,23 @@ module DNS
         end
 
         def to_s
-          text_value
+          if respond_to?(:comment)
+            "#{record} #{comment}"
+          else
+            record.to_s
+          end
         end
 
         def record_type
-          record.elements[4].text_value
+          record.type.text_value.to_s
         end
 
         def ttl
-          record.ttl || zone.variables['TTL'].to_i
+          record.ttl_and_klass.ttl
+        end
+
+        def klass
+          record.ttl_and_klass.klass
         end
 
         def method_missing(method_name, *args)
@@ -644,35 +641,40 @@ module DNS
         end
         s0 << r1
         if r1
-          s15, i15 = [], index
-          loop do
-            r16 = _nt_space
-            if r16
-              s15 << r16
-            else
-              break
-            end
+          i16, s16 = index, []
+          r18 = _nt_space
+          if r18
+            r17 = r18
+          else
+            r17 = instantiate_node(SyntaxNode,input, index...index)
           end
-          r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
+          s16 << r17
+          if r17
+            r19 = _nt_comment
+            s16 << r19
+          end
+          if s16.last
+            r16 = instantiate_node(SyntaxNode,input, i16...index, s16)
+            r16.extend(ResourceRecord0)
+          else
+            @index = i16
+            r16 = nil
+          end
+          if r16
+            r15 = r16
+          else
+            r15 = instantiate_node(SyntaxNode,input, index...index)
+          end
           s0 << r15
           if r15
-            r18 = _nt_comment
-            if r18
-              r17 = r18
-            else
-              r17 = instantiate_node(SyntaxNode,input, index...index)
-            end
-            s0 << r17
-            if r17
-              r19 = _nt_linebreak
-              s0 << r19
-            end
+            r20 = _nt_linebreak
+            s0 << r20
           end
         end
         if s0.last
           r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(ResourceRecord0)
           r0.extend(ResourceRecord1)
+          r0.extend(ResourceRecord2)
         else
           @index = i0
           r0 = nil
@@ -692,26 +694,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def ip_address
-          elements[6]
+          elements[5]
         end
       end
 
       module ARecord1
         def to_s
-          "#{host} #{ttl} #{klass} A #{ip_address}"
+          "#{host} #{ttl_and_klass} A #{ip_address}"
         end
       end
 
@@ -733,27 +735,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("A", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
+              else
+                terminal_parse_failure("A")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("A", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 1))
-                  @index += 1
-                else
-                  terminal_parse_failure("A")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_ip_address
                   s0 << r6
-                  if r6
-                    r7 = _nt_ip_address
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -937,26 +935,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def ip_address
-          elements[6]
+          elements[5]
         end
       end
 
       module AaaaRecord1
         def to_s
-          "#{host} #{ttl} #{klass} AAAA #{ip_address}"
+          "#{host} #{ttl_and_klass} AAAA #{ip_address}"
         end
       end
 
@@ -978,27 +976,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("AAAA", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 4))
+                @index += 4
+              else
+                terminal_parse_failure("AAAA")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("AAAA", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 4))
-                  @index += 4
-                else
-                  terminal_parse_failure("AAAA")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_ip6_address
                   s0 << r6
-                  if r6
-                    r7 = _nt_ip6_address
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -1074,96 +1068,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def target
-          elements[6]
+          elements[5]
         end
       end
 
       module CnameRecord1
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def klass
-          elements[2]
-        end
-
-        def ttl
-          elements[3]
-        end
-
-        def space2
-          elements[5]
-        end
-
-        def target
-          elements[6]
-        end
-      end
-
-      module CnameRecord2
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def ttl
-          elements[2]
-        end
-
-        def space2
-          elements[4]
-        end
-
-        def target
-          elements[5]
-        end
-      end
-
-      module CnameRecord3
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def klass
-          elements[2]
-        end
-
-        def space2
-          elements[4]
-        end
-
-        def target
-          elements[5]
-        end
-      end
-
-      module CnameRecord4
         def to_s
-          "#{host} #{ttl} #{klass} CNAME #{target}"
+          "#{host} #{ttl_and_klass} CNAME #{target}"
         end
       end
 
@@ -1178,180 +1102,42 @@ module DNS
           return cached
         end
 
-        i0 = index
-        i1, s1 = index, []
-        r2 = _nt_host
-        s1 << r2
-        if r2
-          r3 = _nt_space
-          s1 << r3
-          if r3
-            r4 = _nt_ttl
-            s1 << r4
-            if r4
-              r5 = _nt_klass
-              s1 << r5
-              if r5
-                if has_terminal?("CNAME", false, index)
-                  r6 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                  @index += 5
-                else
-                  terminal_parse_failure("CNAME")
-                  r6 = nil
-                end
-                s1 << r6
-                if r6
-                  r7 = _nt_space
-                  s1 << r7
-                  if r7
-                    r8 = _nt_host
-                    s1 << r8
-                  end
-                end
-              end
-            end
-          end
-        end
-        if s1.last
-          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(CnameRecord0)
-        else
-          @index = i1
-          r1 = nil
-        end
+        i0, s0 = index, []
+        r1 = _nt_host
+        s0 << r1
         if r1
-          r0 = r1
-          r0.extend(CnameRecord4)
+          r2 = _nt_space
+          s0 << r2
+          if r2
+            r3 = _nt_ttl_and_klass
+            s0 << r3
+            if r3
+              if has_terminal?("CNAME", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                @index += 5
+              else
+                terminal_parse_failure("CNAME")
+                r4 = nil
+              end
+              s0 << r4
+              if r4
+                r5 = _nt_space
+                s0 << r5
+                if r5
+                  r6 = _nt_host
+                  s0 << r6
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(CnameRecord0)
+          r0.extend(CnameRecord1)
         else
-          i9, s9 = index, []
-          r10 = _nt_host
-          s9 << r10
-          if r10
-            r11 = _nt_space
-            s9 << r11
-            if r11
-              r12 = _nt_klass
-              s9 << r12
-              if r12
-                r13 = _nt_ttl
-                s9 << r13
-                if r13
-                  if has_terminal?("CNAME", false, index)
-                    r14 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                    @index += 5
-                  else
-                    terminal_parse_failure("CNAME")
-                    r14 = nil
-                  end
-                  s9 << r14
-                  if r14
-                    r15 = _nt_space
-                    s9 << r15
-                    if r15
-                      r16 = _nt_host
-                      s9 << r16
-                    end
-                  end
-                end
-              end
-            end
-          end
-          if s9.last
-            r9 = instantiate_node(SyntaxNode,input, i9...index, s9)
-            r9.extend(CnameRecord1)
-          else
-            @index = i9
-            r9 = nil
-          end
-          if r9
-            r0 = r9
-            r0.extend(CnameRecord4)
-          else
-            i17, s17 = index, []
-            r18 = _nt_host
-            s17 << r18
-            if r18
-              r19 = _nt_space
-              s17 << r19
-              if r19
-                r20 = _nt_ttl
-                s17 << r20
-                if r20
-                  if has_terminal?("CNAME", false, index)
-                    r21 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                    @index += 5
-                  else
-                    terminal_parse_failure("CNAME")
-                    r21 = nil
-                  end
-                  s17 << r21
-                  if r21
-                    r22 = _nt_space
-                    s17 << r22
-                    if r22
-                      r23 = _nt_host
-                      s17 << r23
-                    end
-                  end
-                end
-              end
-            end
-            if s17.last
-              r17 = instantiate_node(SyntaxNode,input, i17...index, s17)
-              r17.extend(CnameRecord2)
-            else
-              @index = i17
-              r17 = nil
-            end
-            if r17
-              r0 = r17
-              r0.extend(CnameRecord4)
-            else
-              i24, s24 = index, []
-              r25 = _nt_host
-              s24 << r25
-              if r25
-                r26 = _nt_space
-                s24 << r26
-                if r26
-                  r27 = _nt_klass
-                  s24 << r27
-                  if r27
-                    if has_terminal?("CNAME", false, index)
-                      r28 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                      @index += 5
-                    else
-                      terminal_parse_failure("CNAME")
-                      r28 = nil
-                    end
-                    s24 << r28
-                    if r28
-                      r29 = _nt_space
-                      s24 << r29
-                      if r29
-                        r30 = _nt_host
-                        s24 << r30
-                      end
-                    end
-                  end
-                end
-              end
-              if s24.last
-                r24 = instantiate_node(SyntaxNode,input, i24...index, s24)
-                r24.extend(CnameRecord3)
-              else
-                @index = i24
-                r24 = nil
-              end
-              if r24
-                r0 = r24
-                r0.extend(CnameRecord4)
-              else
-                @index = i0
-                r0 = nil
-              end
-            end
-          end
+          @index = i0
+          r0 = nil
         end
 
         node_cache[:cname_record][start_index] = r0
@@ -1368,34 +1154,34 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def priority
-          elements[6]
+          elements[5]
         end
 
         def space3
-          elements[7]
+          elements[6]
         end
 
         def exchanger
-          elements[8]
+          elements[7]
         end
       end
 
       module MxRecord1
         def to_s
-          "#{host} #{ttl} #{klass} MX #{priority} #{exchanger}"
+          "#{host} #{ttl_and_klass} MX #{priority} #{exchanger}"
         end
       end
 
@@ -1417,33 +1203,29 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("MX", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                @index += 2
+              else
+                terminal_parse_failure("MX")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("MX", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
-                  @index += 2
-                else
-                  terminal_parse_failure("MX")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_integer
                   s0 << r6
                   if r6
-                    r7 = _nt_integer
+                    r7 = _nt_space
                     s0 << r7
                     if r7
-                      r8 = _nt_space
+                      r8 = _nt_host
                       s0 << r8
-                      if r8
-                        r9 = _nt_host
-                        s0 << r9
-                      end
                     end
                   end
                 end
@@ -1474,26 +1256,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def data
-          elements[6]
+          elements[5]
         end
       end
 
       module NaptrRecord1
         def to_s
-          "#{host} #{ttl} #{klass} NAPTR #{data}"
+          "#{host} #{ttl_and_klass} NAPTR #{data}"
         end
       end
 
@@ -1515,27 +1297,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("NAPTR", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 5))
+                @index += 5
+              else
+                terminal_parse_failure("NAPTR")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("NAPTR", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 5))
-                  @index += 5
-                else
-                  terminal_parse_failure("NAPTR")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_data
                   s0 << r6
-                  if r6
-                    r7 = _nt_data
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -1564,26 +1342,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def nameserver
-          elements[6]
+          elements[5]
         end
       end
 
       module NsRecord1
         def to_s
-          "#{host} #{ttl} #{klass} NS #{nameserver}"
+          "#{host} #{ttl_and_klass} NS #{nameserver}"
         end
       end
 
@@ -1605,27 +1383,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("NS", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 2))
+                @index += 2
+              else
+                terminal_parse_failure("NS")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("NS", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 2))
-                  @index += 2
-                else
-                  terminal_parse_failure("NS")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_host
                   s0 << r6
-                  if r6
-                    r7 = _nt_host
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -1654,26 +1428,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def target
-          elements[6]
+          elements[5]
         end
       end
 
       module PtrRecord1
         def to_s
-          "#{host} #{ttl} #{klass} PTR #{target}"
+          "#{host} #{ttl_and_klass} PTR #{target}"
         end
       end
 
@@ -1695,27 +1469,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("PTR", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("PTR")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("PTR", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("PTR")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_host
                   s0 << r6
-                  if r6
-                    r7 = _nt_host
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -1744,42 +1514,42 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def ns
-          elements[6]
+          elements[5]
         end
 
         def space3
-          elements[7]
+          elements[6]
         end
 
         def rp
-          elements[8]
+          elements[7]
         end
 
         def space4
-          elements[9]
+          elements[8]
         end
 
         def data
-          elements[10]
+          elements[9]
         end
       end
 
       module SoaRecord1
         def to_s
-          "#{origin} #{ttl} #{klass} SOA #{ns} #{rp} (#{data})"
+          "#{origin} #{ttl_and_klass} SOA #{ns} #{rp} (#{data})"
         end
       end
 
@@ -1801,39 +1571,35 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("SOA", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("SOA")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("SOA", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("SOA")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_ns
                   s0 << r6
                   if r6
-                    r7 = _nt_ns
+                    r7 = _nt_space
                     s0 << r7
                     if r7
-                      r8 = _nt_space
+                      r8 = _nt_rp
                       s0 << r8
                       if r8
-                        r9 = _nt_rp
+                        r9 = _nt_space
                         s0 << r9
                         if r9
-                          r10 = _nt_space
+                          r10 = _nt_data
                           s0 << r10
-                          if r10
-                            r11 = _nt_data
-                            s0 << r11
-                          end
                         end
                       end
                     end
@@ -1866,192 +1632,50 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def priority
-          elements[6]
+          elements[5]
         end
 
         def space3
-          elements[7]
+          elements[6]
         end
 
         def weight
-          elements[8]
+          elements[7]
         end
 
         def space4
-          elements[9]
+          elements[8]
         end
 
         def port
-          elements[10]
+          elements[9]
         end
 
         def space5
-          elements[11]
+          elements[10]
         end
 
         def target
-          elements[12]
+          elements[11]
         end
       end
 
       module SrvRecord1
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def klass
-          elements[2]
-        end
-
-        def ttl
-          elements[3]
-        end
-
-        def space2
-          elements[5]
-        end
-
-        def priority
-          elements[6]
-        end
-
-        def space3
-          elements[7]
-        end
-
-        def weight
-          elements[8]
-        end
-
-        def space4
-          elements[9]
-        end
-
-        def port
-          elements[10]
-        end
-
-        def space5
-          elements[11]
-        end
-
-        def target
-          elements[12]
-        end
-      end
-
-      module SrvRecord2
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def ttl
-          elements[2]
-        end
-
-        def space2
-          elements[4]
-        end
-
-        def priority
-          elements[5]
-        end
-
-        def space3
-          elements[6]
-        end
-
-        def weight
-          elements[7]
-        end
-
-        def space4
-          elements[8]
-        end
-
-        def port
-          elements[9]
-        end
-
-        def space5
-          elements[10]
-        end
-
-        def target
-          elements[11]
-        end
-      end
-
-      module SrvRecord3
-        def host
-          elements[0]
-        end
-
-        def space1
-          elements[1]
-        end
-
-        def klass
-          elements[2]
-        end
-
-        def space2
-          elements[4]
-        end
-
-        def priority
-          elements[5]
-        end
-
-        def space3
-          elements[6]
-        end
-
-        def weight
-          elements[7]
-        end
-
-        def space4
-          elements[8]
-        end
-
-        def port
-          elements[9]
-        end
-
-        def space5
-          elements[10]
-        end
-
-        def target
-          elements[11]
-        end
-      end
-
-      module SrvRecord4
         def to_s
-          "#{host} #{ttl} #{klass} SRV #{priority} #{weight} #{port} #{target}"
+          "#{host} #{ttl_and_klass} SRV #{priority} #{weight} #{port} #{target}"
         end
       end
 
@@ -2066,276 +1690,66 @@ module DNS
           return cached
         end
 
-        i0 = index
-        i1, s1 = index, []
-        r2 = _nt_host
-        s1 << r2
-        if r2
-          r3 = _nt_space
-          s1 << r3
-          if r3
-            r4 = _nt_ttl
-            s1 << r4
-            if r4
-              r5 = _nt_klass
-              s1 << r5
-              if r5
-                if has_terminal?("SRV", false, index)
-                  r6 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("SRV")
-                  r6 = nil
-                end
-                s1 << r6
-                if r6
-                  r7 = _nt_space
-                  s1 << r7
-                  if r7
-                    r8 = _nt_integer
-                    s1 << r8
-                    if r8
-                      r9 = _nt_space
-                      s1 << r9
-                      if r9
-                        r10 = _nt_integer
-                        s1 << r10
-                        if r10
-                          r11 = _nt_space
-                          s1 << r11
-                          if r11
-                            r12 = _nt_integer
-                            s1 << r12
-                            if r12
-                              r13 = _nt_space
-                              s1 << r13
-                              if r13
-                                r14 = _nt_host
-                                s1 << r14
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-          end
-        end
-        if s1.last
-          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(SrvRecord0)
-        else
-          @index = i1
-          r1 = nil
-        end
+        i0, s0 = index, []
+        r1 = _nt_host
+        s0 << r1
         if r1
-          r0 = r1
-          r0.extend(SrvRecord4)
+          r2 = _nt_space
+          s0 << r2
+          if r2
+            r3 = _nt_ttl_and_klass
+            s0 << r3
+            if r3
+              if has_terminal?("SRV", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("SRV")
+                r4 = nil
+              end
+              s0 << r4
+              if r4
+                r5 = _nt_space
+                s0 << r5
+                if r5
+                  r6 = _nt_integer
+                  s0 << r6
+                  if r6
+                    r7 = _nt_space
+                    s0 << r7
+                    if r7
+                      r8 = _nt_integer
+                      s0 << r8
+                      if r8
+                        r9 = _nt_space
+                        s0 << r9
+                        if r9
+                          r10 = _nt_integer
+                          s0 << r10
+                          if r10
+                            r11 = _nt_space
+                            s0 << r11
+                            if r11
+                              r12 = _nt_host
+                              s0 << r12
+                            end
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+        if s0.last
+          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
+          r0.extend(SrvRecord0)
+          r0.extend(SrvRecord1)
         else
-          i15, s15 = index, []
-          r16 = _nt_host
-          s15 << r16
-          if r16
-            r17 = _nt_space
-            s15 << r17
-            if r17
-              r18 = _nt_klass
-              s15 << r18
-              if r18
-                r19 = _nt_ttl
-                s15 << r19
-                if r19
-                  if has_terminal?("SRV", false, index)
-                    r20 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                    @index += 3
-                  else
-                    terminal_parse_failure("SRV")
-                    r20 = nil
-                  end
-                  s15 << r20
-                  if r20
-                    r21 = _nt_space
-                    s15 << r21
-                    if r21
-                      r22 = _nt_integer
-                      s15 << r22
-                      if r22
-                        r23 = _nt_space
-                        s15 << r23
-                        if r23
-                          r24 = _nt_integer
-                          s15 << r24
-                          if r24
-                            r25 = _nt_space
-                            s15 << r25
-                            if r25
-                              r26 = _nt_integer
-                              s15 << r26
-                              if r26
-                                r27 = _nt_space
-                                s15 << r27
-                                if r27
-                                  r28 = _nt_host
-                                  s15 << r28
-                                end
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-          end
-          if s15.last
-            r15 = instantiate_node(SyntaxNode,input, i15...index, s15)
-            r15.extend(SrvRecord1)
-          else
-            @index = i15
-            r15 = nil
-          end
-          if r15
-            r0 = r15
-            r0.extend(SrvRecord4)
-          else
-            i29, s29 = index, []
-            r30 = _nt_host
-            s29 << r30
-            if r30
-              r31 = _nt_space
-              s29 << r31
-              if r31
-                r32 = _nt_ttl
-                s29 << r32
-                if r32
-                  if has_terminal?("SRV", false, index)
-                    r33 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                    @index += 3
-                  else
-                    terminal_parse_failure("SRV")
-                    r33 = nil
-                  end
-                  s29 << r33
-                  if r33
-                    r34 = _nt_space
-                    s29 << r34
-                    if r34
-                      r35 = _nt_integer
-                      s29 << r35
-                      if r35
-                        r36 = _nt_space
-                        s29 << r36
-                        if r36
-                          r37 = _nt_integer
-                          s29 << r37
-                          if r37
-                            r38 = _nt_space
-                            s29 << r38
-                            if r38
-                              r39 = _nt_integer
-                              s29 << r39
-                              if r39
-                                r40 = _nt_space
-                                s29 << r40
-                                if r40
-                                  r41 = _nt_host
-                                  s29 << r41
-                                end
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-            end
-            if s29.last
-              r29 = instantiate_node(SyntaxNode,input, i29...index, s29)
-              r29.extend(SrvRecord2)
-            else
-              @index = i29
-              r29 = nil
-            end
-            if r29
-              r0 = r29
-              r0.extend(SrvRecord4)
-            else
-              i42, s42 = index, []
-              r43 = _nt_host
-              s42 << r43
-              if r43
-                r44 = _nt_space
-                s42 << r44
-                if r44
-                  r45 = _nt_klass
-                  s42 << r45
-                  if r45
-                    if has_terminal?("SRV", false, index)
-                      r46 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                      @index += 3
-                    else
-                      terminal_parse_failure("SRV")
-                      r46 = nil
-                    end
-                    s42 << r46
-                    if r46
-                      r47 = _nt_space
-                      s42 << r47
-                      if r47
-                        r48 = _nt_integer
-                        s42 << r48
-                        if r48
-                          r49 = _nt_space
-                          s42 << r49
-                          if r49
-                            r50 = _nt_integer
-                            s42 << r50
-                            if r50
-                              r51 = _nt_space
-                              s42 << r51
-                              if r51
-                                r52 = _nt_integer
-                                s42 << r52
-                                if r52
-                                  r53 = _nt_space
-                                  s42 << r53
-                                  if r53
-                                    r54 = _nt_host
-                                    s42 << r54
-                                  end
-                                end
-                              end
-                            end
-                          end
-                        end
-                      end
-                    end
-                  end
-                end
-              end
-              if s42.last
-                r42 = instantiate_node(SyntaxNode,input, i42...index, s42)
-                r42.extend(SrvRecord3)
-              else
-                @index = i42
-                r42 = nil
-              end
-              if r42
-                r0 = r42
-                r0.extend(SrvRecord4)
-              else
-                @index = i0
-                r0 = nil
-              end
-            end
-          end
+          @index = i0
+          r0 = nil
         end
 
         node_cache[:srv_record][start_index] = r0
@@ -2352,26 +1766,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def data
-          elements[6]
+          elements[5]
         end
       end
 
       module SpfRecord1
         def to_s
-          "#{host} #{ttl} #{klass} SPF #{data}"
+          "#{host} #{ttl_and_klass} SPF #{data}"
         end
       end
 
@@ -2393,27 +1807,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("SPF", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("SPF")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("SPF", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("SPF")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_txt_data
                   s0 << r6
-                  if r6
-                    r7 = _nt_txt_data
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -2442,26 +1852,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def data
-          elements[6]
+          elements[5]
         end
       end
 
       module TxtRecord1
         def to_s
-          "#{host} #{ttl} #{klass} TXT #{data}"
+          "#{host} #{ttl_and_klass} TXT #{data}"
         end
       end
 
@@ -2483,27 +1893,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("TXT", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 3))
+                @index += 3
+              else
+                terminal_parse_failure("TXT")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("TXT", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 3))
-                  @index += 3
-                else
-                  terminal_parse_failure("TXT")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_txt_data
                   s0 << r6
-                  if r6
-                    r7 = _nt_txt_data
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -2532,26 +1938,26 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
-          elements[5]
+          elements[4]
         end
 
         def targets
-          elements[6]
+          elements[5]
         end
       end
 
       module XMailFwdRecord1
         def to_s
-          "#{host} #{ttl} #{klass} X-MAIL-FWD #{targets}"
+          "#{recipient} #{ttl_and_klass} X-MAIL-FWD #{targets}"
         end
       end
 
@@ -2573,27 +1979,23 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("X-MAIL-FWD", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 10))
+                @index += 10
+              else
+                terminal_parse_failure("X-MAIL-FWD")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("X-MAIL-FWD", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 10))
-                  @index += 10
-                else
-                  terminal_parse_failure("X-MAIL-FWD")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_mail_address_list
                   s0 << r6
-                  if r6
-                    r7 = _nt_mail_address_list
-                    s0 << r7
-                  end
                 end
               end
             end
@@ -2622,34 +2024,34 @@ module DNS
           elements[1]
         end
 
-        def ttl
+        def ttl_and_klass
           elements[2]
         end
 
-        def klass
+        def type
           elements[3]
         end
 
         def space2
+          elements[4]
+        end
+
+        def fwtype
           elements[5]
         end
 
-        def type
+        def space3
           elements[6]
         end
 
-        def space3
-          elements[7]
-        end
-
         def target
-          elements[8]
+          elements[7]
         end
       end
 
       module XWebFwdRecord1
         def to_s
-          "#{host} #{ttl} #{klass} X-WEB-FWD #{type} #{target}"
+          "#{host} #{ttl_and_klass} X-WEB-FWD #{fwtype} #{target}"
         end
       end
 
@@ -2671,33 +2073,29 @@ module DNS
           r2 = _nt_space
           s0 << r2
           if r2
-            r3 = _nt_ttl
+            r3 = _nt_ttl_and_klass
             s0 << r3
             if r3
-              r4 = _nt_klass
+              if has_terminal?("X-WEB-FWD", false, index)
+                r4 = instantiate_node(SyntaxNode,input, index...(index + 9))
+                @index += 9
+              else
+                terminal_parse_failure("X-WEB-FWD")
+                r4 = nil
+              end
               s0 << r4
               if r4
-                if has_terminal?("X-WEB-FWD", false, index)
-                  r5 = instantiate_node(SyntaxNode,input, index...(index + 9))
-                  @index += 9
-                else
-                  terminal_parse_failure("X-WEB-FWD")
-                  r5 = nil
-                end
+                r5 = _nt_space
                 s0 << r5
                 if r5
-                  r6 = _nt_space
+                  r6 = _nt_forward_type
                   s0 << r6
                   if r6
-                    r7 = _nt_forward_type
+                    r7 = _nt_space
                     s0 << r7
                     if r7
-                      r8 = _nt_space
+                      r8 = _nt_http_uri
                       s0 << r8
-                      if r8
-                        r9 = _nt_http_uri
-                        s0 << r9
-                      end
                     end
                   end
                 end
@@ -2775,7 +2173,7 @@ module DNS
 
       module Space0
         def to_s
-          text_value
+          ' '
         end
       end
 
@@ -2906,14 +2304,8 @@ module DNS
       end
 
       module Klass0
-        def space
-          elements[1]
-        end
-      end
-
-      module Klass1
         def to_s
-          text_value.strip
+          text_value
         end
       end
 
@@ -2928,45 +2320,13 @@ module DNS
           return cached
         end
 
-        i0 = index
-        i1, s1 = index, []
         if has_terminal?("IN", false, index)
-          r2 = instantiate_node(SyntaxNode,input, index...(index + 2))
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 2))
+          r0.extend(Klass0)
           @index += 2
         else
           terminal_parse_failure("IN")
-          r2 = nil
-        end
-        s1 << r2
-        if r2
-          r3 = _nt_space
-          s1 << r3
-        end
-        if s1.last
-          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(Klass0)
-        else
-          @index = i1
-          r1 = nil
-        end
-        if r1
-          r0 = r1
-          r0.extend(Klass1)
-        else
-          if has_terminal?('', false, index)
-            r4 = instantiate_node(SyntaxNode,input, index...(index + 0))
-            @index += 0
-          else
-            terminal_parse_failure('')
-            r4 = nil
-          end
-          if r4
-            r0 = r4
-            r0.extend(Klass1)
-          else
-            @index = i0
-            r0 = nil
-          end
+          r0 = nil
         end
 
         node_cache[:klass][start_index] = r0
@@ -3752,7 +3112,43 @@ module DNS
         r0
       end
 
-      module Ttl0
+      module TtlAndKlass0
+        def time_interval
+          elements[0]
+        end
+
+        def space1
+          elements[1]
+        end
+
+        def klass_part
+          elements[2]
+        end
+
+        def space2
+          elements[3]
+        end
+      end
+
+      module TtlAndKlass1
+        def klass_part
+          elements[0]
+        end
+
+        def space1
+          elements[1]
+        end
+
+        def time_interval
+          elements[2]
+        end
+
+        def space2
+          elements[3]
+        end
+      end
+
+      module TtlAndKlass2
         def time_interval
           elements[0]
         end
@@ -3762,19 +3158,38 @@ module DNS
         end
       end
 
-      module Ttl1
-        def to_i
-          respond_to?(:time_interval) ? time_interval.to_i : nil
+      module TtlAndKlass3
+        def klass_part
+          elements[0]
         end
-        def to_s
-          respond_to?(:time_interval) ? time_interval.to_s : ''
+
+        def space
+          elements[1]
         end
       end
 
-      def _nt_ttl
+      module TtlAndKlass4
+        def to_s
+          [ttl, klass].compact.join(' ')
+        end
+
+        def ttl
+          if respond_to?(:time_interval) && time_interval.text_value != ''
+            time_interval.text_value
+          else
+            nil
+          end
+        end
+
+        def klass
+          respond_to?(:klass_part) ? klass_part.text_value : 'IN'
+        end
+      end
+
+      def _nt_ttl_and_klass
         start_index = index
-        if node_cache[:ttl].has_key?(index)
-          cached = node_cache[:ttl][index]
+        if node_cache[:ttl_and_klass].has_key?(index)
+          cached = node_cache[:ttl_and_klass][index]
           if cached
             cached = SyntaxNode.new(input, index...(index + 1)) if cached == true
             @index = cached.interval.end
@@ -3789,35 +3204,107 @@ module DNS
         if r2
           r3 = _nt_space
           s1 << r3
+          if r3
+            r4 = _nt_klass
+            s1 << r4
+            if r4
+              r5 = _nt_space
+              s1 << r5
+            end
+          end
         end
         if s1.last
           r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
-          r1.extend(Ttl0)
+          r1.extend(TtlAndKlass0)
         else
           @index = i1
           r1 = nil
         end
         if r1
           r0 = r1
-          r0.extend(Ttl1)
+          r0.extend(TtlAndKlass4)
         else
-          if has_terminal?('', false, index)
-            r4 = instantiate_node(SyntaxNode,input, index...(index + 0))
-            @index += 0
-          else
-            terminal_parse_failure('')
-            r4 = nil
+          i6, s6 = index, []
+          r7 = _nt_klass
+          s6 << r7
+          if r7
+            r8 = _nt_space
+            s6 << r8
+            if r8
+              r9 = _nt_time_interval
+              s6 << r9
+              if r9
+                r10 = _nt_space
+                s6 << r10
+              end
+            end
           end
-          if r4
-            r0 = r4
-            r0.extend(Ttl1)
+          if s6.last
+            r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+            r6.extend(TtlAndKlass1)
           else
-            @index = i0
-            r0 = nil
+            @index = i6
+            r6 = nil
+          end
+          if r6
+            r0 = r6
+            r0.extend(TtlAndKlass4)
+          else
+            i11, s11 = index, []
+            r12 = _nt_time_interval
+            s11 << r12
+            if r12
+              r13 = _nt_space
+              s11 << r13
+            end
+            if s11.last
+              r11 = instantiate_node(SyntaxNode,input, i11...index, s11)
+              r11.extend(TtlAndKlass2)
+            else
+              @index = i11
+              r11 = nil
+            end
+            if r11
+              r0 = r11
+              r0.extend(TtlAndKlass4)
+            else
+              i14, s14 = index, []
+              r15 = _nt_klass
+              s14 << r15
+              if r15
+                r16 = _nt_space
+                s14 << r16
+              end
+              if s14.last
+                r14 = instantiate_node(SyntaxNode,input, i14...index, s14)
+                r14.extend(TtlAndKlass3)
+              else
+                @index = i14
+                r14 = nil
+              end
+              if r14
+                r0 = r14
+                r0.extend(TtlAndKlass4)
+              else
+                r18 = _nt_space
+                if r18
+                  r17 = r18
+                else
+                  r17 = instantiate_node(SyntaxNode,input, index...index)
+                end
+                if r17
+                  r0 = r17
+                  r0.extend(TtlAndKlass4)
+                else
+                  @index = i0
+                  r0 = nil
+                end
+              end
+            end
           end
         end
 
-        node_cache[:ttl][start_index] = r0
+        node_cache[:ttl_and_klass][start_index] = r0
 
         r0
       end

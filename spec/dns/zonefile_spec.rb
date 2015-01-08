@@ -87,7 +87,7 @@ eam 900 CNAME www
 eam CNAME www
 
 $ORIGIN test.example.com.
-$TTL 3600; expire in 1 day.
+$TTL 3600; expire in 1 hour.
 @             A     10.1.0.1              ; Test with alternate origin
               MX    10  mail.example.com.
 www           A     10.1.0.2              ; www.test.example.com.
@@ -103,12 +103,6 @@ ZONE
     it "should interpret the origin correctly" do
       zone = DNS::Zonefile.load(@zonefile)
       zone.soa.origin.should eql('example.com.')
-    end
-
-    it "should set the zone variables correctly" do
-      zone = DNS::Zonefile.parse(@zonefile)
-      zone.variables['TTL'].should eql('86400')
-      zone.variables['ORIGIN'].should eql('example.com.')
     end
 
     it "should interpret the SOA correctly" do

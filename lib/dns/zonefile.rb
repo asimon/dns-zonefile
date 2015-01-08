@@ -30,6 +30,7 @@ module DNS
 	entries.each do |e|
 	  case e.parse_type
 	  when :variable
+	    #STDERR.puts "Handling variable: #{e.name.text_value.downcase} = #{e.value.text_value}"
 	    case key = e.name.text_value.downcase
 	    when 'ttl'
 	      @vars[key] = e.value.text_value.to_i
@@ -54,7 +55,7 @@ module DNS
 	    when 'X-MAIL-FWD' then @records << X_MAIL_FWD.new(@vars, e)
 	    when 'X-WEB-FWD'  then @records << X_WEB_FWD.new(@vars, e)
 	    else
-	      raise UnknownRecordType, "Unknown record type: #{e.record_type}"
+	      raise UnknownRecordType, "Unknown record type: #{e.record_type}; #{e.text_value}"
 	    end
 	  end
 	end
@@ -75,7 +76,7 @@ module DNS
 	attribs.each do |attrib|
 	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
-	      @#{attrib} = val.gsub('@', @vars['origin'])
+	      @#{attrib} = val.gsub('@', vars['origin'])
 	    end
 	  MTH
 	end
@@ -87,9 +88,9 @@ module DNS
 	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
 	      if val.strip.empty?
-		@#{attrib} = @vars[:last_host]
+		@#{attrib} = vars[:last_host]
 	      else
-		@#{attrib} = val.gsub('@', @vars['origin'])
+		@#{attrib} = val.gsub('@', vars['origin'])
 	      end
 	    end
 	  MTH
@@ -101,7 +102,7 @@ module DNS
 	attribs.each do |attrib|
 	  class_eval <<-MTH, __FILE__, __LINE__+1
 	    def #{attrib}=(val)
-	      @#{attrib} = val || @vars['ttl']
+	      @#{attrib} = val || vars['ttl']
 	    end
 	  MTH
 	end
@@ -110,6 +111,22 @@ module DNS
       attr_reader :ttl
       attr_writer :klass
       writer_for_ttl :ttl
+
+      attr_reader :vars
+
+      def initialize(vars, parsed=nil)
+	@vars = vars
+
+	if parsed
+	  if respond_to?(:host=) && parsed.respond_to?(:host)
+	    self.host = parsed.host.to_s
+	    vars[:last_host] = host
+	  end
+
+	  self.ttl = (parsed.ttl || vars['ttl']).to_i
+	  self.klass = parsed.klass.to_s
+	end
+      end
 
       def klass
 	@klass = nil if @klass == ''
@@ -124,12 +141,12 @@ module DNS
       writer_for_at  :origin, :nameserver, :responsible_party
 
       def initialize(vars, zonefile_soa=nil)
+	super
+
 	@vars = vars
 	if zonefile_soa
 	  self.origin            = zonefile_soa.origin.to_s
-	  @vars[:last_host]      = self.origin
-	  self.ttl               = zonefile_soa.ttl.to_i
-	  self.klass             = zonefile_soa.klass.to_s
+	  vars[:last_host]       = self.origin
 	  self.nameserver        = zonefile_soa.ns.to_s
 	  self.responsible_party = zonefile_soa.rp.to_s
 	  self.serial            = zonefile_soa.serial.to_i
@@ -147,12 +164,10 @@ module DNS
       inheriting_writer_for_at  :host
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.address      = zonefile_record.ip_address.to_s
 	end
       end
@@ -168,12 +183,10 @@ module DNS
       writer_for_at :domainname
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.domainname   = zonefile_record.target.to_s
 	end
       end
@@ -189,12 +202,10 @@ module DNS
       writer_for_at :domainname
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.priority     = zonefile_record.priority.to_i
 	  self.domainname   = zonefile_record.exchanger.to_s
 	end
@@ -210,12 +221,10 @@ module DNS
       inheriting_writer_for_at  :host
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.data         = zonefile_record.data.to_s
 	end
       end
@@ -228,12 +237,10 @@ module DNS
       writer_for_at :domainname
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.domainname   = zonefile_record.nameserver.to_s
 	end
       end
@@ -248,12 +255,10 @@ module DNS
       writer_for_at :domainname
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.domainname   = zonefile_record.target.to_s
 	end
       end
@@ -268,12 +273,10 @@ module DNS
       writer_for_at :domainname
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.priority     = zonefile_record.priority.to_i
 	  self.weight       = zonefile_record.weight.to_i
 	  self.port         = zonefile_record.port.to_i
@@ -290,12 +293,10 @@ module DNS
       inheriting_writer_for_at  :host
 
       def initialize(vars, zonefile_record)
+	super
+
 	@vars = vars
 	if zonefile_record
-	  self.host         = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl          = zonefile_record.ttl.to_i
-	  self.klass        = zonefile_record.klass.to_s
 	  self.data         = zonefile_record.data.to_s
 	end
       end
@@ -308,15 +309,13 @@ module DNS
       attr_accessor :recipient, :targets
 
       def initialize(vars, zonefile_record)
-	@vars = vars
-
 	if zonefile_record
 	  self.recipient = zonefile_record.recipient.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl = zonefile_record.ttl.to_i
-	  self.klass = zonefile_record.klass.to_s
 	  self.targets = zonefile_record.targets.to_s
 	end
+
+	# needs #recipient
+	super
       end
 
       def host
@@ -335,14 +334,11 @@ module DNS
       inheriting_writer_for_at :host
 
       def initialize(vars, zonefile_record)
+	super
 	@vars = vars
 
 	if zonefile_record
-	  self.host = zonefile_record.host.to_s
-	  @vars[:last_host] = self.host
-	  self.ttl = zonefile_record.ttl.to_i
-	  self.klass = zonefile_record.klass.to_s
-	  self.type = zonefile_record.type.to_s
+	  self.type = zonefile_record.fwtype.to_s
 	  self.target = zonefile_record.target.to_s
 	end
       end

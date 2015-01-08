@@ -1,17 +1,6 @@
 grammar Zonefile
   rule zone
     (variable / space_or_break / comment)* soa (resource_record / variable / comment / space / linebreak)* {
-      def variables
-        @variables ||= begin
-          raw = elements[0].elements.select { |e| e.to_s =~ /^\$/ }
-          variables = {}
-          raw.each do |e|
-            variables[e.name.text_value.to_s] = e.value.text_value.to_s
-          end
-          variables
-        end
-      end
-
       def origin
         soa.origin.host.to_s
       end
@@ -43,17 +32,33 @@ grammar Zonefile
   end
 
   rule soa
-    origin space ttl klass "SOA" space ns space rp space "("? space_or_break* serial space_or_break refresh space_or_break reretry space_or_break expiry space_or_break nxttl space_or_break* ")"? {
+    origin space ttl_and_klass "SOA" space ns space rp space "("? space_or_break* serial space_or_break refresh space_or_break reretry space_or_break expiry space_or_break nxttl space_or_break* ")"? {
       def to_s
         "#{origin} #{ttl} #{klass} SOA #{ns} #{rp} (#{serial} #{refresh} #{reretry} #{expiry} #{nxttl})"
       end
-      
+
       def parse_type ; :soa ; end
+      def ttl; ttl_and_klass.ttl; end
+      def klass; ttl_and_klass.klass; end
     }
   end
 
   rule resource_record
-    record:(a_record / aaaa_record / cname_record / mx_record / naptr_record / ns_record / ptr_record / srv_record / spf_record / txt_record / soa_record / x_mail_fwd_record / x_web_fwd_record) space* comment? linebreak {
+    record:(
+      a_record /
+      aaaa_record /
+      cname_record /
+      mx_record /
+      naptr_record /
+      ns_record /
+      ptr_record /
+      srv_record /
+      spf_record /
+      txt_record /
+      soa_record /
+      x_mail_fwd_record /
+      x_web_fwd_record
+    ) ( space? comment )? linebreak {
       def zone
         p = parent
         while p.respond_to?(:parent) && p.parent
@@ -61,17 +66,25 @@ grammar Zonefile
         end
         p
       end
-      
+
       def to_s
-        text_value
+        if respond_to?(:comment)
+          "#{record} #{comment}"
+        else
+          record.to_s
+        end
       end
 
       def record_type
-        record.elements[4].text_value
+        record.type.text_value.to_s
       end
-      
+
       def ttl
-        record.ttl || zone.variables['TTL'].to_i
+        record.ttl_and_klass.ttl
+      end
+
+      def klass
+        record.ttl_and_klass.klass
       end
 
       def method_missing(method_name, *args)
@@ -89,9 +102,9 @@ grammar Zonefile
   end
 
   rule a_record
-    host space ttl klass "A" space ip_address {
+    host space ttl_and_klass type:"A" space ip_address {
       def to_s
-        "#{host} #{ttl} #{klass} A #{ip_address}"
+        "#{host} #{ttl_and_klass} A #{ip_address}"
       end
     }
   end
@@ -105,9 +118,9 @@ grammar Zonefile
   end
   
   rule aaaa_record
-    host space ttl klass "AAAA" space ip_address:ip6_address {
+    host space ttl_and_klass type:"AAAA" space ip_address:ip6_address {
       def to_s
-        "#{host} #{ttl} #{klass} AAAA #{ip_address}"
+        "#{host} #{ttl_and_klass} AAAA #{ip_address}"
       end
     }
   end
@@ -121,83 +134,73 @@ grammar Zonefile
   end
 
   rule cname_record
-    (
-     host space ttl klass "CNAME" space target:host /
-     host space klass ttl "CNAME" space target:host /
-     host space ttl "CNAME" space target:host /
-     host space klass "CNAME" space target:host 
-    ) {
+    host space ttl_and_klass type:"CNAME" space target:host {
       def to_s
-        "#{host} #{ttl} #{klass} CNAME #{target}"
+        "#{host} #{ttl_and_klass} CNAME #{target}"
       end
     }
   end
 
   rule mx_record
-    host space ttl klass "MX" space priority:integer space exchanger:host {
+    host space ttl_and_klass type:"MX" space priority:integer space exchanger:host {
       def to_s
-        "#{host} #{ttl} #{klass} MX #{priority} #{exchanger}"
+        "#{host} #{ttl_and_klass} MX #{priority} #{exchanger}"
       end
     }
   end
   
   rule naptr_record
-    host space ttl klass "NAPTR" space data {
+    host space ttl_and_klass type:"NAPTR" space data {
       def to_s
-        "#{host} #{ttl} #{klass} NAPTR #{data}"
+        "#{host} #{ttl_and_klass} NAPTR #{data}"
       end
     }
   end
 
   rule ns_record
-    host space ttl klass "NS" space nameserver:host {
+    host space ttl_and_klass type:"NS" space nameserver:host {
       def to_s
-        "#{host} #{ttl} #{klass} NS #{nameserver}"
+        "#{host} #{ttl_and_klass} NS #{nameserver}"
       end
     }
   end
 
   rule ptr_record
-    host space ttl klass "PTR" space target:host {
+    host space ttl_and_klass type:"PTR" space target:host {
       def to_s
-        "#{host} #{ttl} #{klass} PTR #{target}"
+        "#{host} #{ttl_and_klass} PTR #{target}"
       end
     }
   end
 
   rule soa_record
-    origin space ttl klass "SOA" space ns space rp space data {
+    origin space ttl_and_klass type:"SOA" space ns space rp space data {
       def to_s
-        "#{origin} #{ttl} #{klass} SOA #{ns} #{rp} (#{data})"
+        "#{origin} #{ttl_and_klass} SOA #{ns} #{rp} (#{data})"
       end
     }
   end
 
   rule srv_record
-    (
-     host space ttl klass "SRV" space priority:integer space weight:integer space port:integer space target:host /
-     host space klass ttl "SRV" space priority:integer space weight:integer space port:integer space target:host /
-     host space ttl "SRV" space priority:integer space weight:integer space port:integer space target:host /
-     host space klass "SRV" space priority:integer space weight:integer space port:integer space target:host
-    ) {
+    host space ttl_and_klass type:"SRV" space priority:integer space weight:integer space port:integer space target:host {
       def to_s
-        "#{host} #{ttl} #{klass} SRV #{priority} #{weight} #{port} #{target}"
+        "#{host} #{ttl_and_klass} SRV #{priority} #{weight} #{port} #{target}"
       end
     }
   end
   
   rule spf_record
-    host space ttl klass "SPF" space data:txt_data {
+    host space ttl_and_klass type:"SPF" space data:txt_data {
       def to_s
-        "#{host} #{ttl} #{klass} SPF #{data}"
+        "#{host} #{ttl_and_klass} SPF #{data}"
       end
     }
   end
   
   rule txt_record
-    host space ttl klass "TXT" space data:txt_data {
+    host space ttl_and_klass type:"TXT" space data:txt_data {
       def to_s
-        "#{host} #{ttl} #{klass} TXT #{data}"
+        "#{host} #{ttl_and_klass} TXT #{data}"
       end
     }
   end
@@ -209,9 +212,9 @@ grammar Zonefile
   #
   # The targets are a comma-separated list of mail addresses.
   rule x_mail_fwd_record
-    recipient:wildcard_mail_address space ttl klass "X-MAIL-FWD" space targets:mail_address_list {
+    recipient:wildcard_mail_address space ttl_and_klass type:"X-MAIL-FWD" space targets:mail_address_list {
       def to_s
-        "#{host} #{ttl} #{klass} X-MAIL-FWD #{targets}"
+        "#{recipient} #{ttl_and_klass} X-MAIL-FWD #{targets}"
       end
     }
   end
@@ -222,9 +225,9 @@ grammar Zonefile
   #
   # The target is a URI.
   rule x_web_fwd_record
-    host space ttl klass "X-WEB-FWD" space type:forward_type space target:http_uri {
+    host space ttl_and_klass type:"X-WEB-FWD" space fwtype:forward_type space target:http_uri {
       def to_s
-        "#{host} #{ttl} #{klass} X-WEB-FWD #{type} #{target}"
+        "#{host} #{ttl_and_klass} X-WEB-FWD #{fwtype} #{target}"
       end
     }
   end
@@ -240,7 +243,7 @@ grammar Zonefile
   rule space
     [ \t]+ {
       def to_s
-        text_value
+        ' '
       end
     }
   end
@@ -262,9 +265,9 @@ grammar Zonefile
   end
 
   rule klass
-    (("IN" space) / '') {
+    "IN" {
       def to_s
-        text_value.strip
+        text_value
       end
     }
   end
@@ -388,14 +391,29 @@ grammar Zonefile
       end
     }
   end
-  
-  rule ttl
-    ((time_interval space) / '') {
-      def to_i
-        respond_to?(:time_interval) ? time_interval.to_i : nil
-      end
+
+  rule ttl_and_klass
+    (
+      time_interval space klass_part:klass space /
+      klass_part:klass space time_interval space /
+      time_interval space /
+      klass_part:klass space /
+      space?
+    ) {
       def to_s
-        respond_to?(:time_interval) ? time_interval.to_s : ''
+        [ttl, klass].compact.join(' ')
+      end
+
+      def ttl
+        if respond_to?(:time_interval) && time_interval.text_value != ''
+          time_interval.text_value
+        else
+          nil
+        end
+      end
+
+      def klass
+        respond_to?(:klass_part) ? klass_part.text_value : 'IN'
       end
     }
   end

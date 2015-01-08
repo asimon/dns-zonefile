@@ -30,7 +30,6 @@ module DNS
 	entries.each do |e|
 	  case e.parse_type
 	  when :variable
-	    #STDERR.puts "Handling variable: #{e.name.text_value.downcase} = #{e.value.text_value}"
 	    case key = e.name.text_value.downcase
 	    when 'ttl'
 	      @vars[key] = e.value.text_value.to_i

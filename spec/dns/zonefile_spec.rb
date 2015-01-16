@@ -371,17 +371,21 @@ ZONE
     before(:all) do
       @zonefile = DNS::Zonefile.load(<<-MZONE
 $ORIGIN example.com.
-example.com         86400 IN SOA ns0.example.com. hostmaster.example.com. (
+example.com.        86400 IN SOA ns0.example.com. hostmaster.example.com. (
     2006010558
     43200
     3600
     1209600
     180)
 
-bob@example.com      3600 IN X-MAIL-FWD bob@example.org
-bob@sub.example.com  3600 IN X-MAIL-FWD sub-bob@example.org
-*@sub2.example.com    300 IN X-MAIL-FWD wildcard@example.org
-list@l.example.com    300 IN X-MAIL-FWD a@example.org,b@example.org
+jim@                 1299 IN X-MAIL-FWD jim@example.org
+bob@example.com.     3600 IN X-MAIL-FWD bob@example.org
+bob@sub.example.com. 3600 IN X-MAIL-FWD sub-bob@example.org
+jim@                 1300 IN X-MAIL-FWD subjim@example.org
+jim2@@               1300 IN X-MAIL-FWD jim2@example.org
+*@sub2                300 IN X-MAIL-FWD wildcard@example.org
+list@l                300 IN X-MAIL-FWD a@example.org,b@example.org
+*@@                  3954 IN X-MAIL-FWD bobby@example.org
 
 example.com.       3600 IN X-WEB-FWD permanent https://www.example.org/
 fqdn.example.com.       IN X-WEB-FWD temporary https://fqdn.example.org/
@@ -393,24 +397,52 @@ MZONE
     it "should parse mail forwarding pseudo-records" do
       mfwds = @zonefile.records_of DNS::Zonefile::X_MAIL_FWD
 
-      root_bob = mfwds.detect {|r| r.recipient == 'bob@example.com' }
+      root_bob = mfwds.detect {|r| r.recipient == 'bob@example.com.' }
       root_bob.should_not be_nil
       root_bob.targets.should eql('bob@example.org')
 
-      sub_bob = mfwds.detect {|r| r.recipient == 'bob@sub.example.com' }
+      sub_bob = mfwds.detect {|r| r.recipient == 'bob@sub.example.com.' }
       sub_bob.should_not be_nil
       sub_bob.targets.should eql('sub-bob@example.org')
     end
 
+    it "handles trailing '@' in mail recipients" do
+      mfwds = @zonefile.records_of DNS::Zonefile::X_MAIL_FWD
+
+      root_jim = mfwds.detect {|r| r.recipient == 'jim@example.com.' }
+      root_jim.should_not be_nil
+      root_jim.targets.should == "jim@example.org"
+
+      sub_jim = mfwds.detect {|r| r.recipient == 'jim@sub.example.com.' }
+      sub_jim.should_not be_nil
+      sub_jim.targets.should == "subjim@example.org"
+    end
+
+    it "provides origin expansion through '@'" do
+      mfwds = @zonefile.records_of DNS::Zonefile::X_MAIL_FWD
+
+      root_jim2 = mfwds.detect {|r| r.recipient == 'jim2@example.com.' }
+      root_jim2.should_not be_nil
+      root_jim2.targets.should == "jim2@example.org"
+    end
+
     it "should support wildcard recipients" do
       @zonefile.records_of(DNS::Zonefile::X_MAIL_FWD).detect {|r|
-        r.recipient == '*@sub2.example.com'
+        r.recipient == '*@sub2.example.com.'
       }.should_not be_nil
+    end
+
+    it "allows to mix wildcards and origin expansion" do
+      mfwds = @zonefile.records_of DNS::Zonefile::X_MAIL_FWD
+
+      wild_bobby = mfwds.detect {|r| r.recipient == '*@example.com.' }
+      wild_bobby.should_not be_nil
+      wild_bobby.targets.should == "bobby@example.org"
     end
 
     it "should support recipient lists" do
       rlist = @zonefile.records_of(DNS::Zonefile::X_MAIL_FWD).detect {|r|
-        r.recipient == 'list@l.example.com'
+        r.recipient == 'list@l.example.com.'
       }
 
       rlist.should_not be_nil

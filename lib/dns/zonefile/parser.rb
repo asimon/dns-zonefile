@@ -3416,61 +3416,81 @@ module DNS
           return cached
         end
 
-        i0, s0 = index, []
-        i1 = index
-        r2 = _nt_hostname
-        if r2
-          r1 = r2
+        i0 = index
+        i1, s1 = index, []
+        i2 = index
+        r3 = _nt_hostname
+        if r3
+          r2 = r3
         else
           if has_terminal?('*', false, index)
-            r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            r4 = instantiate_node(SyntaxNode,input, index...(index + 1))
             @index += 1
           else
             terminal_parse_failure('*')
-            r3 = nil
+            r4 = nil
           end
-          if r3
-            r1 = r3
+          if r4
+            r2 = r4
           else
-            @index = i1
-            r1 = nil
+            @index = i2
+            r2 = nil
           end
         end
-        s0 << r1
-        if r1
-          i5, s5 = index, []
+        s1 << r2
+        if r2
+          i6, s6 = index, []
           if has_terminal?('.', false, index)
-            r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            r7 = instantiate_node(SyntaxNode,input, index...(index + 1))
             @index += 1
           else
             terminal_parse_failure('.')
+            r7 = nil
+          end
+          s6 << r7
+          if r7
+            r8 = _nt_hostname
+            s6 << r8
+          end
+          if s6.last
+            r6 = instantiate_node(SyntaxNode,input, i6...index, s6)
+            r6.extend(WildcardHostname0)
+          else
+            @index = i6
             r6 = nil
           end
-          s5 << r6
           if r6
-            r7 = _nt_hostname
-            s5 << r7
-          end
-          if s5.last
-            r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
-            r5.extend(WildcardHostname0)
+            r5 = r6
           else
-            @index = i5
-            r5 = nil
+            r5 = instantiate_node(SyntaxNode,input, index...index)
           end
-          if r5
-            r4 = r5
-          else
-            r4 = instantiate_node(SyntaxNode,input, index...index)
-          end
-          s0 << r4
+          s1 << r5
         end
-        if s0.last
-          r0 = instantiate_node(SyntaxNode,input, i0...index, s0)
-          r0.extend(WildcardHostname1)
+        if s1.last
+          r1 = instantiate_node(SyntaxNode,input, i1...index, s1)
+          r1.extend(WildcardHostname1)
         else
-          @index = i0
-          r0 = nil
+          @index = i1
+          r1 = nil
+        end
+        if r1
+          r0 = r1
+          r0.extend(WildcardHostname2)
+        else
+          if has_terminal?("@", false, index)
+            r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
+          else
+            terminal_parse_failure("@")
+            r9 = nil
+          end
+          if r9
+            r0 = r9
+            r0.extend(WildcardHostname2)
+          else
+            @index = i0
+            r0 = nil
+          end
         end
 
         node_cache[:wildcard_hostname][start_index] = r0
@@ -3739,7 +3759,12 @@ module DNS
           end
           s0 << r4
           if r4
-            r5 = _nt_wildcard_hostname
+            r6 = _nt_wildcard_hostname
+            if r6
+              r5 = r6
+            else
+              r5 = instantiate_node(SyntaxNode,input, index...index)
+            end
             s0 << r5
           end
         end

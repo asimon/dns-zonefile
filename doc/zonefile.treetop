@@ -435,7 +435,7 @@ grammar Zonefile
 
   # Allow a leading "*" label.
   rule wildcard_hostname
-    ( ( hostname / '*' ) ( '.' hostname )? ) {
+    ( ( ( hostname / '*' ) ( '.' hostname )? ) / "@" ) {
       def to_s
         text_value
       end
@@ -479,7 +479,7 @@ grammar Zonefile
   # Allow mail addresses that are catch-alls ("*" localpart) or "match"
   # multiple hosts by using a wildcard hostname.
   rule wildcard_mail_address
-    ( "*" /  mail_localpart ) "@" exchange:wildcard_hostname {
+    ( "*" /  mail_localpart ) "@" exchange:wildcard_hostname? {
       def to_s
         text_value
       end

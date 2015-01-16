@@ -308,9 +308,24 @@ module DNS
       attr_accessor :recipient, :targets
 
       def initialize(vars, zonefile_record)
+	@vars = vars
+
 	if zonefile_record
 	  self.recipient = zonefile_record.recipient.to_s
 	  self.targets = zonefile_record.targets.to_s
+
+	  h = self.host.to_s
+	  unless h.end_with?('.')
+	    if h.empty?
+	      self.host = vars[:last_host]
+	    elsif h == '@'
+	      self.host = h
+	    else
+	      self.host = "#{h}.#{vars['origin']}"
+	    end
+	  end
+
+	  vars[:last_host] = host
 	end
 
 	# needs #recipient
@@ -323,7 +338,7 @@ module DNS
 
       def host=(s)
 	r_local = recipient.split('@', 2).first
-	self.recipient = "#{r_local}@#{s}"
+	self.recipient = "#{r_local}@#{s.sub('@', vars['origin'])}"
       end
     end
 

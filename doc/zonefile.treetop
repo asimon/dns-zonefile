@@ -58,7 +58,7 @@ grammar Zonefile
       soa_record /
       x_mail_fwd_record /
       x_web_fwd_record
-    ) ( space? comment )? linebreak {
+    ) space_and_comment:( space? comment )? linebreak {
       def zone
         p = parent
         while p.respond_to?(:parent) && p.parent
@@ -67,8 +67,14 @@ grammar Zonefile
         p
       end
 
+      def comment
+        if space_and_comment.respond_to?(:comment)
+	  space_and_comment.comment.to_s
+        end
+      end
+
       def to_s
-        if respond_to?(:comment)
+        if comment
           "#{record} #{comment}"
         else
           record.to_s

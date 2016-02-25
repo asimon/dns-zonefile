@@ -112,6 +112,7 @@ module DNS
       writer_for_ttl :ttl
 
       attr_reader :vars
+      attr_accessor :comment
 
       def initialize(vars, parsed=nil)
 	@vars = vars
@@ -124,6 +125,9 @@ module DNS
 
 	  self.ttl = (parsed.ttl || vars['ttl']).to_i
 	  self.klass = parsed.klass.to_s
+	  if parsed.respond_to?(:comment)
+	    self.comment = parsed.comment
+	  end
 	end
       end
 

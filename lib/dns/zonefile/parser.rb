@@ -512,6 +512,10 @@ module DNS
           elements[0]
         end
 
+        def space_and_comment
+          elements[1]
+        end
+
         def linebreak
           elements[2]
         end
@@ -526,8 +530,14 @@ module DNS
           p
         end
 
+        def comment
+          if space_and_comment.respond_to?(:comment)
+    	  space_and_comment.comment.to_s
+          end
+        end
+
         def to_s
-          if respond_to?(:comment)
+          if comment
             "#{record} #{comment}"
           else
             record.to_s
